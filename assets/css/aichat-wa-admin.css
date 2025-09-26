@@ -1,0 +1,114 @@
+/* Estilos admin addon WhatsApp */
+
+.aichat-wa-wrap .card {
+  border-radius: .6rem;
+}
+
+.aichat-wa-wrap .card-header {
+  background: linear-gradient(135deg,#f8f9fa,#eef2f5);
+  font-size: .95rem;
+}
+
+/* Expand layout to wide width */
+.aichat-wa-wrap.container-fluid {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  max-width: 100%;
+}
+
+.aichat-wa-wrap .card {
+  width: 100%;
+  max-width: 100% !important; /* Override WP/Bootstrap admin card constraint (e.g., 520px) */
+  display: block;
+}
+
+.aichat-wa-conversation {
+  background: #f5f7f9;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.aichat-wa-msg {
+  background: #fff;
+  border: 1px solid #e2e6ea;
+  border-radius: .75rem;
+  padding: .65rem .85rem;
+  margin-bottom: .75rem;
+  position: relative;
+  box-shadow: 0 1px 1px rgba(0,0,0,.04);
+  transition: background .15s;
+  font-size: .9rem;
+}
+
+.aichat-wa-msg:hover {
+  background: #fcfcfd;
+}
+
+.aichat-wa-msg.aichat-wa-in {
+  border-left: 4px solid #0d6efd;
+}
+
+.aichat-wa-msg.aichat-wa-out {
+  border-left: 4px solid #28a745;
+  background: #f0f2f4; /* Diferenciación visual para respuestas del bot */
+}
+
+/* Mejora contraste en modo hover manteniendo distinción */
+.aichat-wa-msg.aichat-wa-out:hover {
+  background: #eceef0;
+}
+
+.aichat-wa-meta {
+  font-size: .65rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-weight: 600;
+  margin-bottom: .35rem;
+  color: #555;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  align-items: center;
+}
+
+.aichat-wa-body {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.25rem;
+}
+
+.aichat-wa-wrap code {
+  font-size: .75rem;
+  background: #f1f3f5;
+  color: #555;
+  padding: .2rem .4rem;
+  border-radius: .35rem;
+}
+
+.aichat-wa-wrap table td,
+.aichat-wa-wrap table th {
+  vertical-align: middle;
+}
+
+.aichat-wa-wrap .badge {
+  font-weight: 500;
+}
+
+.aichat-wa-wrap .form-label {
+  font-weight: 500;
+}
+
+.aichat-wa-wrap .btn-outline-primary,
+.aichat-wa-wrap .btn-outline-danger {
+  --bs-btn-padding-y: .3rem;
+  --bs-btn-padding-x: .55rem;
+}
+
+.aichat-wa-wrap .alert {
+  border-radius: .65rem;
+}
+
+/* Remove artificial max-width so conversation and tables use full width */
+@media (min-width: 1400px){
+  .aichat-wa-conversation { max-width: 100%; }
+}
