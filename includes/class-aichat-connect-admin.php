@@ -1,30 +1,30 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
-class AIChat_WA_Admin {
+class AIChat_Connect_Admin {
     private static $instance;
     private $assets_loaded = false;
     public static function instance(){ if(!self::$instance){ self::$instance = new self(); } return self::$instance; }
     private function __construct(){
         add_action('admin_menu', [$this,'menu']);
         add_action('admin_init', [$this,'register_settings']);
-        add_action('admin_post_aichat_wa_save_number', [$this,'handle_save_number']);
-        add_action('admin_post_aichat_wa_delete_number', [$this,'handle_delete_number']);
+    add_action('admin_post_aichat_connect_save_number', [$this,'handle_save_number']);
+    add_action('admin_post_aichat_connect_delete_number', [$this,'handle_delete_number']);
         add_action('admin_enqueue_scripts', [$this,'enqueue_assets']);
-        add_action('wp_ajax_aichat_wa_list_bots', [$this,'ajax_list_bots']);
-        add_action('wp_ajax_nopriv_aichat_wa_list_bots', [$this,'ajax_list_bots']);
+    add_action('wp_ajax_aichat_connect_list_bots', [$this,'ajax_list_bots']);
+    add_action('wp_ajax_nopriv_aichat_connect_list_bots', [$this,'ajax_list_bots']);
         // Eliminado: ensure_default_exists() (mapeo por defecto)
-        // add_action('admin_init', function(){ AIChat_WA_Repository::instance()->ensure_default_exists(); });
+    // add_action('admin_init', function(){ AIChat_Connect_Repository::instance()->ensure_default_exists(); });
     }
 
     private function is_plugin_screen(){
         $page = $_GET['page'] ?? '';
         return in_array($page, [
-            'aichat-wa',            // Mapeos
-            'aichat-wa-settings',   // Settings / Config
-            'aichat-wa-logs',
-            'aichat-wa-logs-detail',
-            'aichat-wa-providers'
+            'aichat-connect',            // Mapeos
+            'aichat-connect-settings',   // Settings / Config
+            'aichat-connect-logs',
+            'aichat-connect-logs-detail',
+            'aichat-connect-providers'
         ], true);
     }
 
@@ -36,28 +36,28 @@ class AIChat_WA_Admin {
         $base = plugin_dir_url($plugin_main);
 
         wp_enqueue_style(
-            'aichat-wa-bootstrap',
+            'aichat-connect-bootstrap',
             $base . 'assets/vendor/bootstrap/css/bootstrap.min.css',
             [],
             '5.3.3'
         );
 
         wp_enqueue_style(
-            'aichat-wa-bootstrap-icons',
+            'aichat-connect-bootstrap-icons',
             $base . 'assets/vendor/bootstrap-icons/font/bootstrap-icons.css',
-            ['aichat-wa-bootstrap'],
+            ['aichat-connect-bootstrap'],
             '1.11.3'
         );
 
         wp_enqueue_style(
-            'aichat-wa-admin',
-            $base . 'assets/css/aichat-wa-admin.css',
-            ['aichat-wa-bootstrap','aichat-wa-bootstrap-icons'],
+            'aichat-connect-admin',
+            $base . 'assets/css/aichat-connect-admin.css',
+            ['aichat-connect-bootstrap','aichat-connect-bootstrap-icons'],
             '1.0.0'
         );
 
         wp_enqueue_script(
-            'aichat-wa-bootstrap',
+            'aichat-connect-bootstrap',
             $base . 'assets/vendor/bootstrap/js/bootstrap.bundle.min.js',
             ['jquery'],
             '5.3.3',
@@ -65,8 +65,8 @@ class AIChat_WA_Admin {
         );
 
         wp_enqueue_script(
-            'aichat-wa-admin',
-            $base . 'assets/js/aichat-wa-admin.js',
+            'aichat-connect-admin',
+            $base . 'assets/js/aichat-connect-admin.js',
             ['jquery'],
             '1.0.0',
             true
@@ -78,67 +78,67 @@ class AIChat_WA_Admin {
     public function menu(){
         // Menú principal apuntando a Mapeos (gestión de phone IDs → bots)
         add_menu_page(
-            'AI Chat WhatsApp',
-            'AI Chat WhatsApp',
+            'AI Chat Connect',
+            'AI Chat Connect',
             'manage_options',
-            'aichat-wa',
+            'aichat-connect',
             [$this,'render_mappings'],
             'dashicons-whatsapp',
             80
         );
         // Submenú Mapeos (alias explícito) para claridad
         add_submenu_page(
-            'aichat-wa',
-            'AI Chat WhatsApp - Mapeos',
+            'aichat-connect',
+            'AI Chat Connect - Mapeos',
             'Mapeos',
             'manage_options',
-            'aichat-wa',
+            'aichat-connect',
             [$this,'render_mappings']
         );
         // Submenú Settings con configuración + guía
         add_submenu_page(
-            'aichat-wa',
-            'AI Chat WhatsApp - Settings',
+            'aichat-connect',
+            'AI Chat Connect - Settings',
             'Settings',
             'manage_options',
-            'aichat-wa-settings',
+            'aichat-connect-settings',
             [$this,'render_settings']
         );
         // Logs
         add_submenu_page(
-            'aichat-wa',
-            'AI Chat WhatsApp - Logs',
+            'aichat-connect',
+            'AI Chat Connect - Logs',
             'Logs',
             'manage_options',
-            'aichat-wa-logs',
+            'aichat-connect-logs',
             [$this,'render_logs']
         );
         // Detalle de logs oculto
         add_submenu_page(
             null,
-            'AI Chat WhatsApp - Logs (detalle)',
+            'AI Chat Connect - Logs (detalle)',
             '__HIDDEN__',
             'manage_options',
-            'aichat-wa-logs-detail',
+            'aichat-connect-logs-detail',
             [$this,'render_logs_detail']
         );
-        remove_submenu_page('aichat-wa','aichat-wa-logs-detail');
+        remove_submenu_page('aichat-connect','aichat-connect-logs-detail');
     }
 
     public function register_settings(){
-        register_setting('aichat_wa','aichat_wa_access_token');
-        register_setting('aichat_wa','aichat_wa_default_phone_id');
-        register_setting('aichat_wa','aichat_wa_verify_token');
+    register_setting('aichat_connect','aichat_connect_access_token');
+    register_setting('aichat_connect','aichat_connect_default_phone_id');
+    register_setting('aichat_connect','aichat_connect_verify_token');
     }
 
     public function render_mappings(){
         if (!current_user_can('manage_options')) return;
-        $repo = AIChat_WA_Repository::instance();
+    $repo = AIChat_Connect_Repository::instance();
         $numbers = $repo->list_numbers();
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center mb-4 gap-2">';
         echo '<h1 class="h3 m-0"><i class="bi bi-diagram-3 text-success"></i> Mapeos Phone ID → Bot</h1>';
-        echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-wa-settings')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Settings</a>';
+    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-settings')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Settings</a>';
         echo '</div>';
 
         // Mensajes de estado
@@ -160,12 +160,12 @@ class AIChat_WA_Admin {
         if ($numbers){
             foreach($numbers as $n){
                 $edit_url = wp_nonce_url(
-                    add_query_arg(['page'=>'aichat-wa','edit'=>$n['id']], admin_url('admin.php')),
-                    'aichat_wa_edit_'.$n['id']
+                    add_query_arg(['page'=>'aichat-connect','edit'=>$n['id']], admin_url('admin.php')),
+                    'aichat_connect_edit_'.$n['id']
                 );
                 $del_url = wp_nonce_url(
-                    admin_url('admin-post.php?action=aichat_wa_delete_number&id='.(int)$n['id']),
-                    'aichat_wa_delete_'.$n['id']
+                    admin_url('admin-post.php?action=aichat_connect_delete_number&id='.(int)$n['id']),
+                    'aichat_connect_delete_'.$n['id']
                 );
                 echo '<tr>';
                 echo '<td><code>'.esc_html($n['phone']).'</code></td>';
@@ -186,7 +186,7 @@ class AIChat_WA_Admin {
 
         // Formulario
         $editing = null;
-        if ( isset($_GET['edit']) && wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'aichat_wa_edit_'.(int)$_GET['edit'] ) ){
+    if ( isset($_GET['edit']) && wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'aichat_connect_edit_'.(int)$_GET['edit'] ) ){
             $editing = $repo->get_number((int)$_GET['edit']);
         }
         $defaults = [
@@ -207,15 +207,15 @@ class AIChat_WA_Admin {
         } elseif ($current_service === 'ai-engine') {
             $bots = $this->get_ai_engine_bots();
         }
-        $providers_active = AIChat_WA_Repository::instance()->list_providers(true);
+    $providers_active = AIChat_Connect_Repository::instance()->list_providers(true);
 
         echo '<div class="card shadow-sm mb-5" id="aichat-wa-form">';
         echo '<div class="card-header py-2"><strong>'.($editing?'<i class="bi bi-pencil-square"></i> Editar':'<i class="bi bi-plus-circle"></i> Añadir').' mapeo</strong></div>';
         echo '<div class="card-body">';
         echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="row g-3">';
-        echo '<input type="hidden" name="action" value="aichat_wa_save_number">';
+    echo '<input type="hidden" name="action" value="aichat_connect_save_number">';
         if ($editing){ echo '<input type="hidden" name="id" value="'.(int)$row['id'].'">'; }
-        wp_nonce_field('aichat_wa_save_number');
+    wp_nonce_field('aichat_connect_save_number');
 
         echo '<div class="col-md-4">';
         echo '<label class="form-label">Phone ID (Meta) <span class="text-danger">*</span></label>';
@@ -278,13 +278,13 @@ class AIChat_WA_Admin {
     public function render_settings(){
         if (!current_user_can('manage_options')) return;
         $webhook = esc_url( site_url('/wp-json/aichat-wa/v1/webhook') );
-        $access_token = get_option('aichat_wa_access_token','');
-        $default_phone = get_option('aichat_wa_default_phone_id','');
-        $verify_token = get_option('aichat_wa_verify_token','');
+    $access_token = get_option('aichat_connect_access_token','');
+    $default_phone = get_option('aichat_connect_default_phone_id','');
+    $verify_token = get_option('aichat_connect_verify_token','');
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center mb-4 gap-2">';
         echo '<h1 class="h3 m-0"><i class="bi bi-gear-wide-connected text-success"></i> Configuración WhatsApp</h1>';
-        echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-wa')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-diagram-3"></i> Mapeos</a>';
+    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-diagram-3"></i> Mapeos</a>';
         echo '</div>';
         if ( isset($_GET['updated']) ) {
             echo '<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>Configuración guardada<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
@@ -310,20 +310,20 @@ class AIChat_WA_Admin {
         echo '<div class="card-header py-2"><strong><i class="bi bi-sliders"></i> Credenciales & Ajustes</strong></div>';
         echo '<div class="card-body">';
         echo '<form method="post" action="options.php" class="row g-3">';
-        settings_fields('aichat_wa');
+    settings_fields('aichat_connect');
         echo '<div class="col-12">';
         echo '<label class="form-label">Access Token (Graph API) <span class="text-danger">*</span></label>';
-        echo '<input type="text" name="aichat_wa_access_token" class="form-control" value="'.esc_attr($access_token).'" placeholder="EAAG..." />';
+    echo '<input type="text" name="aichat_connect_access_token" class="form-control" value="'.esc_attr($access_token).'" placeholder="EAAG..." />';
         echo '<div class="form-text">Token de acceso con permisos de WhatsApp Business (recomendado: system user de larga duración).</div>';
         echo '</div>';
         echo '<div class="col-12 col-md-6">';
         echo '<label class="form-label">Default Business Phone ID</label>';
-        echo '<input type="text" name="aichat_wa_default_phone_id" class="form-control" value="'.esc_attr($default_phone).'" placeholder="123456789012345" />';
+    echo '<input type="text" name="aichat_connect_default_phone_id" class="form-control" value="'.esc_attr($default_phone).'" placeholder="123456789012345" />';
         echo '<div class="form-text">Se usa si un mapeo específico no provee phone/token.</div>';
         echo '</div>';
         echo '<div class="col-12 col-md-6">';
         echo '<label class="form-label">Verify Token</label>';
-        echo '<input type="text" name="aichat_wa_verify_token" class="form-control" value="'.esc_attr($verify_token).'" placeholder="mi-token-seguro" />';
+    echo '<input type="text" name="aichat_connect_verify_token" class="form-control" value="'.esc_attr($verify_token).'" placeholder="mi-token-seguro" />';
         echo '<div class="form-text">Debe coincidir con el configurado en Meta para validar el webhook (GET).</div>';
         echo '</div>';
         echo '<div class="col-12">';
@@ -339,7 +339,7 @@ class AIChat_WA_Admin {
         echo '<ul class="mb-0 ps-3">';
         echo '<li>Los mapeos definen qué bot responde por cada <strong>Phone Number ID</strong> (business). Gestiona eso en la pestaña <em>Mapeos</em>.</li>';
         echo '<li>El contexto de sesión se genera como <code>wa_{md5(phone_del_usuario)}</code>.</li>';
-        echo '<li>Activa el modo debug definiendo <code>AICHAT_WA_DEBUG</code> a true en el archivo principal para ver logs detallados.</li>';
+    echo '<li>Activa el modo debug definiendo <code>AICHAT_CONNECT_DEBUG</code> a true en el archivo principal para ver logs detallados.</li>';
         echo '<li>Providers gestionan timeouts, fast ack y fallback. Revisa la pestaña Providers para afinar comportamiento.</li>';
         echo '</ul>';
         echo '</div></div></div>';
@@ -417,7 +417,7 @@ class AIChat_WA_Admin {
 
     public function handle_save_number(){
         if (!current_user_can('manage_options')) wp_die('Unauthorized');
-        check_admin_referer('aichat_wa_save_number');
+    check_admin_referer('aichat_connect_save_number');
         $data = [
             'id' => isset($_POST['id']) ? (int)$_POST['id'] : null,
             'phone' => sanitize_text_field($_POST['phone'] ?? ''),
@@ -428,20 +428,20 @@ class AIChat_WA_Admin {
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
         // Eliminado: lógica de is_default y reseteo global
-        $id = AIChat_WA_Repository::instance()->upsert_number($data);
-        wp_safe_redirect( admin_url('admin.php?page=aichat-wa&updated=1') );
+    $id = AIChat_Connect_Repository::instance()->upsert_number($data);
+    wp_safe_redirect( admin_url('admin.php?page=aichat-connect&updated=1') );
         exit;
     }
 
     public function handle_delete_number(){
         if (!current_user_can('manage_options')) wp_die('Unauthorized');
         $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        check_admin_referer('aichat_wa_delete_'.$id);
-        $res = AIChat_WA_Repository::instance()->delete_number($id);
+    check_admin_referer('aichat_connect_delete_'.$id);
+    $res = AIChat_Connect_Repository::instance()->delete_number($id);
         if (!$res){
-            wp_safe_redirect( admin_url('admin.php?page=aichat-wa&error='.rawurlencode('No se pudo eliminar')) );
+            wp_safe_redirect( admin_url('admin.php?page=aichat-connect&error='.rawurlencode('No se pudo eliminar')) );
         } else {
-            wp_safe_redirect( admin_url('admin.php?page=aichat-wa&deleted=1') );
+            wp_safe_redirect( admin_url('admin.php?page=aichat-connect&deleted=1') );
         }
         exit;
     }
@@ -449,13 +449,13 @@ class AIChat_WA_Admin {
     // Listado agrupado por día y teléfono
     public function render_logs(){
         if (!current_user_can('manage_options')) return;
-        $repo = AIChat_WA_Repository::instance();
+    $repo = AIChat_Connect_Repository::instance();
         $groups = $repo->list_conversation_groups(300);
 
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center gap-2 mb-4">';
         echo '<h1 class="h3 m-0"><i class="bi bi-chat-dots text-success"></i> WhatsApp Logs</h1>';
-        echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-wa')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Settings</a>';
+    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-settings')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Settings</a>';
         echo '</div>';
 
         echo '<div class="card shadow-sm">';
@@ -467,9 +467,9 @@ class AIChat_WA_Admin {
         echo '</tr></thead><tbody>';
         if ($groups){
             foreach($groups as $g){
-                $nonce = wp_create_nonce('aichat_wa_logs_view_'.$g['phone'].'_'.$g['day']);
+                $nonce = wp_create_nonce('aichat_connect_logs_view_'.$g['phone'].'_'.$g['day']);
                 $url = add_query_arg([
-                    'page'=>'aichat-wa-logs-detail',
+                    'page'=>'aichat-connect-logs-detail',
                     'day'=>$g['day'],
                     'phone'=>$g['phone'],
                     '_wpnonce'=>$nonce
@@ -495,12 +495,12 @@ class AIChat_WA_Admin {
         if (!current_user_can('manage_options')) return;
         $day = isset($_GET['day']) ? sanitize_text_field($_GET['day']) : '';
         $phone = isset($_GET['phone']) ? sanitize_text_field($_GET['phone']) : '';
-        $ok = $day && $phone && wp_verify_nonce($_GET['_wpnonce'] ?? '', 'aichat_wa_logs_view_'.$phone.'_'.$day);
+    $ok = $day && $phone && wp_verify_nonce($_GET['_wpnonce'] ?? '', 'aichat_connect_logs_view_'.$phone.'_'.$day);
 
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center gap-2 mb-4">';
         echo '<h1 class="h3 m-0"><i class="bi bi-chat-text text-success"></i> Detalle conversación</h1>';
-        echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-wa-logs')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>';
+    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-logs')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>';
         echo '</div>';
 
         if (!$ok){
@@ -508,7 +508,7 @@ class AIChat_WA_Admin {
             return;
         }
 
-        $repo = AIChat_WA_Repository::instance();
+    $repo = AIChat_Connect_Repository::instance();
         $messages = $repo->get_conversation_for_day($phone, $day);
 
         echo '<div class="card shadow-sm mb-4">';

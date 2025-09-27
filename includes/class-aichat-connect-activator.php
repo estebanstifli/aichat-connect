@@ -1,15 +1,15 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
-class AIChat_WA_Activator {
+class AIChat_Connect_Activator {
     public static function activate(){
         global $wpdb;        
         $charset = $wpdb->get_charset_collate();
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-    $numbers   = $wpdb->prefix . 'aichat_wa_numbers';
-    $messages  = $wpdb->prefix . 'aichat_wa_messages';
-    $providers = $wpdb->prefix . 'aichat_wa_providers';
+    $numbers   = $wpdb->prefix . 'aichat_connect_numbers';
+    $messages  = $wpdb->prefix . 'aichat_connect_messages';
+    $providers = $wpdb->prefix . 'aichat_connect_providers';
 
         // Nota compatibilidad: Algunos entornos MariaDB antiguos fallan con DATETIME DEFAULT CURRENT_TIMESTAMP.
         // Usamos TIMESTAMP para created_at y eliminamos updated_at ON UPDATE (se puede manejar vía código si se requiere).

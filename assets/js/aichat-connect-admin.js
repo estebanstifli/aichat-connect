@@ -7,7 +7,7 @@
     function loadBots(){
       const svc = provider.value;
       bot.innerHTML = '<option>Cargando...</option>';
-      fetch((window.ajaxurl || '') + '?action=aichat_wa_list_bots&service=' + encodeURIComponent(svc))
+  fetch((window.ajaxurl || '') + '?action=aichat_connect_list_bots&service=' + encodeURIComponent(svc))
         .then(r=>r.json())
         .then(j=>{
           bot.innerHTML='';

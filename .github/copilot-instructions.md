@@ -1,90 +1,84 @@
-# AI Chat WhatsApp Addon - Copilot Instructions
+# AI Chat Connect Addon – Copilot Instructions
 
-## Project Overview
-This WordPress plugin acts as a WhatsApp integration addon for the main "AI Chat" plugin. It receives WhatsApp messages via Meta Cloud API webhooks and routes them to existing chat bots configured in the core plugin.
+Concise reference for AI agents contributing to this WordPress addon. Focus on real, current patterns (do not document roadmap features as implemented).
 
-**Critical Dependency**: This addon requires the main AI Chat plugin to be active and expects the `aichat_generate_bot_response()` function to be available.
+## Core Purpose
+Receive WhatsApp (Meta Cloud API) text messages and answer using a mapped bot from either the AI Chat core plugin (`aichat_generate_bot_response`) or alternative provider (AI Engine). Admin UI manages phone → bot/provider mappings, provider behavior (timeouts / fast ack), and logs.
 
-## Architecture Pattern
-The codebase follows a layered service architecture with singleton classes:
+## Layered Architecture (All Singletons)
+1. Webhook (`AIChat_Connect_Webhook`): Registers REST route, verifies GET token, extracts first text message from payload.
+2. Service (`AIChat_Connect_Service`): Orchestrates bot resolution, provider call, timeout / fast ack logic, logging, outbound send.
+3. Repository (`AIChat_Connect_Repository`): DB CRUD for numbers, providers, messages; bot + credential resolution.
+4. API Client (`AIChat_Connect_API_Client`): Low-level Graph API POST /messages with token expiry detection + transient backoff.
+5. Admin (`AIChat_Connect_Admin`, `AIChat_Connect_Admin_Providers`): Menus (Mapeos, Settings, Logs, Providers), Bootstrap assets, forms.
+6. Activator (`AIChat_Connect_Activator`): Creates three tables (numbers, messages, providers) via `dbDelta` on activate / upgrade.
 
-- **Webhook Layer** (`AIChat_WA_Webhook`): Handles Meta webhook verification and incoming message processing
-- **Service Layer** (`AIChat_WA_Service`): Business logic for message routing and bot interaction
-- **Repository Layer** (`AIChat_WA_Repository`): Database operations and bot resolution logic
-- **API Client** (`AIChat_WA_API_Client`): WhatsApp Graph API communication
-- **Admin Interface** (`AIChat_WA_Admin`): WordPress admin panel integration
+## Database Tables
+- `*_aichat_connect_numbers`: columns `phone` (Meta phone_number_id), `bot_slug`, `service` (provider key), optional `access_token` (overrides global).
+- `*_aichat_connect_messages`: unified log; inbound rows may also contain `bot_response` (so one row can hold both sides) plus status + meta JSON.
+- `*_aichat_connect_providers`: configurable provider behavior (timeout_ms, fast_ack, on_timeout_action, fallback messages, meta JSON).
 
-## Database Schema
-Two custom tables manage the integration:
-- `wp_aichat_wa_numbers`: Phone number → bot mapping with fallback chain
-- `wp_aichat_wa_messages`: Message log with direction tracking (in/out)
+## Bot & Credential Resolution (Current Actual Logic)
+`AIChat_Connect_Repository::resolve_bot_slug($business_id, $user_phone)`:
+1. Exact match on business `phone_number_id` in numbers table.
+2. Fallback: global option `aichat_global_bot_slug` (service forced to `aichat`).
+No wildcard / user phone chain implemented (older doc obsolete).
+Credentials: `resolve_credentials` returns mapping-specific token/phone_id else global (`aichat_connect_access_token`, `aichat_connect_default_phone_id`).
 
-## Bot Resolution Chain
-The system uses a sophisticated fallback mechanism in `resolve_bot_slug()`:
-1. Business phone_number_id mapping (for business accounts)
-2. Explicit user phone mapping  
-3. Wildcard '*' mapping (catch-all)
-4. Global bot from core plugin settings
+## Message Processing Flow
+POST /wp-json/aichat-wa/v1/webhook → extract first text → Service `handle_incoming_text`:
+- Idempotency: skip if WA message id already logged.
+- Resolve bot + provider row.
+- Optional fast ACK (independent send) if provider `fast_ack_enabled`.
+- Provider dispatch:
+    * service `aichat`: call `aichat_generate_bot_response($bot_slug,$text,$session_id,['source_channel'=>'whatsapp'])` if available.
+    * service `ai-engine`: call `$GLOBALS['mwai']->simpleChatbotQuery()` if plugin active; else WP_Error.
+- Timeout handling after provider call: apply `on_timeout_action` (silent | fast_ack_followup | fallback_message).
+- Log inbound row (with response if any) then send WA reply via API client (unless silent timeout or error). Outbound manual sends log a separate `direction='out'` row.
 
-## Key Workflow Patterns
+## Sessions
+Deterministic: `wa_` + `md5(user_phone)` for continuity across requests (no DB lookup required).
 
-### Incoming Message Flow
-1. Webhook receives POST to `/wp-json/aichat-wa/v1/webhook`
-2. Extract first text message from Meta payload
-3. Resolve bot using phone number fallback chain
-4. Call core plugin: `aichat_generate_bot_response($bot_slug, $text, $session_id, ['source_channel' => 'whatsapp'])`
-5. Log conversation and send response via Graph API
+## Logging & Debug
+Central helper `aichat_connect_log_debug($message,$context)` gated by constant `AICHAT_CONNECT_DEBUG` (default true in dev). Provide scalar context only; WP_Error is stringified. Messages logged before and after each major stage (mapping, provider call, send, errors, timeouts).
 
-### Session Management
-Session IDs are deterministic: `'wa_' . md5($phone)` - this ensures consistent conversation context per phone number.
+## Error / Resilience Patterns
+- Provider & send failures use `WP_Error` with specific codes (`aichat_core_missing`, `ai_engine_not_available`, `wa_token_expired`, etc.).
+- Token expiry (Graph error code 190) triggers transient `aichat_connect_token_block` (2 min) to suppress repeated failing calls.
+- Idempotency: `message_exists()` check by `wa_message_id` (truncated to 100 chars if longer).
 
-### Error Handling Patterns
-- Use `WP_Error` objects consistently for API failures
-- Implement token blocking via transients to prevent API spam
-- Log all operations to `wp_aichat_wa_messages` table for debugging
+## Providers Layer
+Providers table lets UI tweak runtime behavior without code changes: fast ack text, timeout thresholds, fallback strategy. Service reads row once per inbound message.
 
-## Development Conventions
+## Hooks / Filters
+- Filter `aichat_connect_pre_provider( $arr, $service, $phone, $bot_slug )` can abort (`proceed=false`) or mutate text.
+- Action `aichat_connect_post_provider( $info_array )` fires after successful send (informational only).
+- Filter `aichat_connect_graph_version` to override Graph API version (default v23.0).
 
-### Singleton Pattern
-All main classes use this pattern:
+## REST Endpoints
+- GET `/wp-json/aichat-wa/v1/webhook` verify: returns raw challenge if `hub.verify_token` matches stored option (uses `hash_equals`).
+- POST `/wp-json/aichat-wa/v1/webhook` message intake (currently only processes first text message, others ignored gracefully).
+
+## Admin UX Conventions
+- Menus: Mapeos (numbers), Settings (tokens & webhook info), Logs (grouped day+phone), Providers (behavior tuning), hidden Logs detail page.
+- Inbound + assistant response often share one row (direction=in with `bot_response`). Pure outbound manual sends create separate `direction=out` row.
+
+## Extending Safely
+- Always use repository methods for DB (they encode meta JSON & maintain updated_at).
+- New provider keys: insert row in providers table; map numbers with `service`=key; implement integration inside Service switch.
+- When adding media support: extend Service to branch on message type before calling provider; keep idempotency & logging semantics.
+
+## Quick Reference Examples
+Singleton pattern:
 ```php
-private static $instance;
-public static function instance(){ 
-    if(!self::$instance){ self::$instance = new self(); } 
-    return self::$instance; 
-}
+class Example { private static $i; static function instance(){ return self::$i ?: self::$i = new self(); } }
+```
+Send outbound programmatically:
+```php
+aichat_connect_send_message('+34999999999', 'Hola!', 'mi_bot');
 ```
 
-### Debug Logging
-Use the `AICHAT_WA_DEBUG` constant for conditional logging:
-```php
-if (defined('AICHAT_WA_DEBUG') && AICHAT_WA_DEBUG) {
-    error_log('[AIChat-WA] Debug message here');
-}
-```
+## Known Gaps (Intentional, See ROADMAP.md)
+No signature validation (X-Hub-Signature-256) yet; no media, rate limiting, or delivery status handling. Do not assume these exist.
 
-### Security Practices
-- Always use `hash_equals()` for token comparison (timing attack prevention)
-- Validate webhook verify tokens in GET requests
-- TODO: Implement X-Hub-Signature-256 verification (see ROADMAP.md)
-
-## REST API Endpoints
-- `GET /wp-json/aichat-wa/v1/webhook` - Meta webhook verification
-- `POST /wp-json/aichat-wa/v1/webhook` - Incoming message processing
-
-## Configuration Settings
-Stored as WordPress options:
-- `aichat_wa_access_token` - Meta Graph API token
-- `aichat_wa_default_phone_id` - Default business phone ID
-- `aichat_wa_verify_token` - Webhook verification token
-
-## Testing & Debugging
-- Enable debug mode by setting `AICHAT_WA_DEBUG` to true in main plugin file
-- Check WordPress error logs for detailed webhook processing information
-- Use admin interface at "AI Chat > WhatsApp" to manage phone mappings
-- Webhook URL for Meta configuration: `{site_url}/wp-json/aichat-wa/v1/webhook`
-
-## Future Architecture Notes
-- Current implementation is synchronous; consider Action Scheduler for high-volume scenarios
-- Media message support will require additional MIME type handling in service layer
-- Rate limiting should be implemented per phone number using WordPress transients
+Keep edits consistent with these patterns; prefer adding hooks/filters over modifying core flow directly.

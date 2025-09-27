@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
-class AIChat_WA_Service {
+class AIChat_Connect_Service {
     private static $instance;
     private $repo;
     private $api;
@@ -9,8 +9,8 @@ class AIChat_WA_Service {
     public static function instance(){ if(!self::$instance){ self::$instance = new self(); } return self::$instance; }
 
     private function __construct(){
-        $this->repo = AIChat_WA_Repository::instance();
-        $this->api  = AIChat_WA_API_Client::instance();
+        $this->repo = AIChat_Connect_Repository::instance();
+        $this->api  = AIChat_Connect_API_Client::instance();
     }
 
     public function ensure_session_id($phone){
@@ -33,7 +33,7 @@ class AIChat_WA_Service {
     $bot_slug = $resolution['bot_slug'];
     $service  = $resolution['service'] ?? 'aichat';
     $map_ms = (int) round(($t_map_end - $t_map_start) * 1000);
-    aichat_wa_log_debug('Mapping resolved', [ 'phone'=>$phone, 'business_id'=>$business_id, 'bot_slug'=>$bot_slug, 'provider_service'=>$service, 'match_type'=>$resolution['match_type'] ?? null, 'ms'=>$map_ms ]);
+    aichat_connect_log_debug('Mapping resolved', [ 'phone'=>$phone, 'business_id'=>$business_id, 'bot_slug'=>$bot_slug, 'provider_service'=>$service, 'match_type'=>$resolution['match_type'] ?? null, 'ms'=>$map_ms ]);
         if (!$bot_slug){
             $this->repo->log_message([
                 'wa_message_id' => $wa_message_id,
@@ -50,17 +50,17 @@ class AIChat_WA_Service {
     // Obtener configuración del provider (si existe) para timeout / fast ack
     $provider_cfg = $this->repo->get_provider_by_key($service);
     if ($provider_cfg) {
-        aichat_wa_log_debug('Provider config loaded', [ 'service'=>$service, 'timeout_ms'=>$provider_cfg['timeout_ms'], 'fast_ack'=> (int)$provider_cfg['fast_ack_enabled'] ]);
+        aichat_connect_log_debug('Provider config loaded', [ 'service'=>$service, 'timeout_ms'=>$provider_cfg['timeout_ms'], 'fast_ack'=> (int)$provider_cfg['fast_ack_enabled'] ]);
     }
 
     // Hooks pre-proveedor (permiten mutar texto o abortar)
-    $pre = apply_filters('aichat_wa_pre_provider', [
+    $pre = apply_filters('aichat_connect_pre_provider', [
         'proceed' => true,
         'text' => $body_text,
         'meta' => []
     ], $service, $phone, $bot_slug);
     if (empty($pre['proceed'])) {
-        aichat_wa_log_debug('Pre-provider aborted', [ 'service'=>$service ]);
+        aichat_connect_log_debug('Pre-provider aborted', [ 'service'=>$service ]);
         return ['error' => 'aborted_by_filter'];
     }
     if (!empty($pre['text']) && is_string($pre['text'])) {
@@ -73,9 +73,9 @@ class AIChat_WA_Service {
         try {
             $creds_ack = $this->repo->resolve_credentials($business_id, $phone);
             $this->api->send_text($phone, $provider_cfg['fast_ack_message'], $creds_ack);
-            aichat_wa_log_debug('Fast ack sent', [ 'service'=>$service ]);
+            aichat_connect_log_debug('Fast ack sent', [ 'service'=>$service ]);
         } catch (\Throwable $e) {
-            aichat_wa_log_debug('Fast ack error', [ 'msg'=>$e->getMessage() ]);
+            aichat_connect_log_debug('Fast ack error', [ 'msg'=>$e->getMessage() ]);
         }
     }
 
@@ -110,7 +110,7 @@ class AIChat_WA_Service {
         $t_provider_end = microtime(true);
         $prov_ms = (int) round(($t_provider_end - $t_provider_start) * 1000);
         if (is_wp_error($result)) {
-            aichat_wa_log_debug('Provider call error', [ 'bot_slug'=>$bot_slug, 'service'=>$service, 'ms'=>$prov_ms, 'code'=>$result->get_error_code(), 'msg'=>$result->get_error_message() ]);
+            aichat_connect_log_debug('Provider call error', [ 'bot_slug'=>$bot_slug, 'service'=>$service, 'ms'=>$prov_ms, 'code'=>$result->get_error_code(), 'msg'=>$result->get_error_message() ]);
             $this->repo->log_message([
                 'wa_message_id' => $wa_message_id,
                 'phone' => $phone,
@@ -136,7 +136,7 @@ class AIChat_WA_Service {
             }
         }
         if ($assistant === '') {
-            aichat_wa_log_debug('Empty assistant after provider call', [ 'result_keys'=> is_array($result)? implode(',', array_keys($result)) : 'non-array' ]);
+            aichat_connect_log_debug('Provider empty assistant', [ 'service'=>$service ]);
             $this->repo->log_message([
                 'wa_message_id' => $wa_message_id,
                 'phone' => $phone,
@@ -150,11 +150,11 @@ class AIChat_WA_Service {
             ]);
             return ['error' => 'empty_assistant'];
         }
-        aichat_wa_log_debug('Provider call ok', [ 'bot_slug'=>$bot_slug, 'service'=>$service, 'ms'=>$prov_ms, 'assistant_chars'=>strlen($assistant) ]);
+        aichat_connect_log_debug('Provider call ok', [ 'bot_slug'=>$bot_slug, 'service'=>$service, 'ms'=>$prov_ms, 'assistant_chars'=>strlen($assistant) ]);
 
         // Timeout check (si tiempo excedido y config indica acción)
         if ($provider_cfg && $timeout_ms > 0 && $prov_ms > $timeout_ms) {
-            aichat_wa_log_debug('Provider timeout triggered', [ 'service'=>$service, 'prov_ms'=>$prov_ms, 'timeout_ms'=>$timeout_ms ]);
+            aichat_connect_log_debug('Provider timeout triggered', [ 'prov_ms'=>$prov_ms, 'timeout_ms'=>$timeout_ms, 'action'=>$provider_cfg['on_timeout_action'] ]);
             $action = $provider_cfg['on_timeout_action'];
             if ($action === 'fallback_message' && !empty($provider_cfg['fallback_message'])) {
                 $assistant = $provider_cfg['fallback_message'];
@@ -174,6 +174,7 @@ class AIChat_WA_Service {
                 return ['error'=>'timeout'];
             } else {
                 // fast_ack_followup: dejamos assistant original, se enviará normalmente (el ACK ya se mandó antes)
+                aichat_connect_log_debug('Timeout action fallback fast ack followup', []);
             }
         }
         // Log antes de enviar para tener trazabilidad aunque falle envío
@@ -191,20 +192,20 @@ class AIChat_WA_Service {
 
     // Resolver credenciales (permiten multi-número) y enviar respuesta
     $creds = $this->repo->resolve_credentials($business_id, $phone);
-    aichat_wa_log_debug('Sending WA message', [ 'phone'=>$phone, 'bot_slug'=>$bot_slug, 'provider_service'=>$service, 'using_custom_token'=> empty($creds['access_token'])?0:1, 'phone_id'=>$creds['phone_id'] ? '***set***':'***empty***' ]);
+    aichat_connect_log_debug('Sending WA message', [ 'phone'=>$phone, 'bot_slug'=>$bot_slug, 'provider_service'=>$service, 'using_custom_token'=> empty($creds['access_token'])?0:1, 'phone_id'=>$creds['phone_id'] ? '***set***':'***empty***' ]);
     $send = $this->api->send_text($phone, $assistant, $creds);
         if (is_wp_error($send)){
             $code = $send->get_error_code();
             $data = $send->get_error_data();
-            aichat_wa_log_debug('WA send error', [ 'code'=>$code, 'message'=>$send->get_error_message() ]);
+            aichat_connect_log_debug('WA send error', [ 'code'=>$code, 'message'=>$send->get_error_message() ]);
             if ($code === 'wa_token_expired' || $code === 'wa_token_blocked'){
                 return ['error' => $send->get_error_message(), 'code' => $code];
             }
             return ['error' => $send->get_error_message(), 'details' => $data];
         }
-        aichat_wa_log_debug('WA message sent OK', [ 'phone'=>$phone, 'chars'=>strlen($assistant) ]);
+        aichat_connect_log_debug('WA message sent OK', [ 'phone'=>$phone, 'chars'=>strlen($assistant) ]);
         // Hook post-proveedor (permite inspeccionar y mutar antes de enviar, aunque ya se envió). Sólo informativo aquí.
-        do_action('aichat_wa_post_provider', [
+    do_action('aichat_connect_post_provider', [
             'phone' => $phone,
             'bot_slug' => $bot_slug,
             'service' => $service,
@@ -224,7 +225,7 @@ class AIChat_WA_Service {
         }
         $session_id = $this->ensure_session_id($phone);
     $creds = $this->repo->resolve_credentials(null, $phone);
-    aichat_wa_log_debug('Manual outbound send', [ 'phone'=>$phone, 'bot_slug'=>$bot_slug, 'chars'=>strlen($text) ]);
+    aichat_connect_log_debug('Manual outbound send', [ 'phone'=>$phone, 'bot_slug'=>$bot_slug, 'chars'=>strlen($text) ]);
     $resp = $this->api->send_text($phone, $text, $creds);
         $this->repo->log_message([
             'phone' => $phone,
@@ -236,9 +237,9 @@ class AIChat_WA_Service {
             'meta' => ['send' => is_wp_error($resp)? $resp->get_error_message():$resp]
         ]);
         if (is_wp_error($resp)) {
-            aichat_wa_log_debug('Manual outbound error', [ 'code'=>$resp->get_error_code(), 'message'=>$resp->get_error_message() ]);
+            aichat_connect_log_debug('Manual outbound error', [ 'code'=>$resp->get_error_code(), 'message'=>$resp->get_error_message() ]);
         } else {
-            aichat_wa_log_debug('Manual outbound ok', [ 'phone'=>$phone ]);
+            aichat_connect_log_debug('Manual outbound ok', [ 'phone'=>$phone ]);
         }
         return $resp;
     }

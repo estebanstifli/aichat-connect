@@ -1,14 +1,14 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
-class AIChat_WA_API_Client {
+class AIChat_Connect_API_Client {
     private static $instance;    
     private $graph_version;   
 
     private function __construct(){
         // Allow overriding Graph API version via filter if needed
         $default_version = 'v23.0';
-        $this->graph_version = apply_filters('aichat_wa_graph_version', $default_version);
+    $this->graph_version = apply_filters('aichat_connect_graph_version', $default_version);
     }
 
     public static function instance(){
@@ -17,11 +17,11 @@ class AIChat_WA_API_Client {
     }
 
     private function get_token(){
-        return get_option('aichat_wa_access_token','');
+    return get_option('aichat_connect_access_token','');
     }
 
     private function get_phone_id(){
-        return get_option('aichat_wa_default_phone_id','');
+    return get_option('aichat_connect_default_phone_id','');
     }
 
     public function send_text($phone, $text, $overrides = []){
@@ -31,10 +31,10 @@ class AIChat_WA_API_Client {
             return new WP_Error('wa_config','Token o phone_id no configurados');
         }
         // Optional backoff when we recently detected expired/invalid token to avoid spamming logs
-        if (get_transient('aichat_wa_token_block')){
+    if (get_transient('aichat_connect_token_block')){
             return new WP_Error('wa_token_blocked', 'Token marcado como inválido recientemente. Reintenta más tarde.');
         }
-        aichat_wa_log_debug('Graph send init', [ 'phone'=>$phone, 'phone_id'=> $phone_id ? '***set***':'***empty***', 'chars'=>strlen($text) ]);
+        aichat_connect_log_debug('Graph send init', [ 'phone'=>$phone, 'phone_id'=> $phone_id ? '***set***':'***empty***', 'chars'=>strlen($text) ]);
         $url = 'https://graph.facebook.com/' . $this->graph_version . '/' . rawurlencode($phone_id) . '/messages';
         $args = [
             'headers' => [
@@ -62,15 +62,15 @@ class AIChat_WA_API_Client {
                 $gsub  = isset($graph_error['error_subcode']) ? (int)$graph_error['error_subcode'] : 0;
                 if ($gcode === 190){
                     // Block further attempts for 2 minutes to reduce log noise
-                    set_transient('aichat_wa_token_block', 1, 2 * MINUTE_IN_SECONDS);
-                    aichat_wa_log_debug('Graph token expired/invalid', [ 'phone'=>$phone, 'http_code'=>$code, 'gcode'=>$gcode, 'gsub'=>$gsub ]);
+                    set_transient('aichat_connect_token_block', 1, 2 * MINUTE_IN_SECONDS);
+                    aichat_connect_log_debug('Graph token expired/invalid', [ 'phone'=>$phone, 'http_code'=>$code, 'gcode'=>$gcode, 'gsub'=>$gsub ]);
                     return new WP_Error('wa_token_expired', 'El token de WhatsApp ha expirado o es inválido (code 190)', [ 'error' => $graph_error, 'http_code' => $code ]);
                 }
             }
-            aichat_wa_log_debug('Graph HTTP error', [ 'phone'=>$phone, 'http_code'=>$code ]);
+            aichat_connect_log_debug('Graph HTTP error', [ 'phone'=>$phone, 'http_code'=>$code ]);
             return new WP_Error('wa_http', 'Error HTTP WA: ' . $code, [ 'body' => $body, 'raw' => $body_raw ]);
         }
-        aichat_wa_log_debug('Graph send ok', [ 'phone'=>$phone, 'http_code'=>$code ]);
+        aichat_connect_log_debug('Graph send OK', [ 'code'=>$code ]);
         return $body;
     }
 }

@@ -1,24 +1,24 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
-class AIChat_WA_Admin_Providers {
+class AIChat_Connect_Admin_Providers {
     private static $instance;    
     public static function instance(){ if(!self::$instance){ self::$instance = new self(); } return self::$instance; }
 
     private function __construct(){
         add_action('admin_menu', [$this,'menu']);
-        add_action('admin_post_aichat_wa_save_provider', [$this,'handle_save']);
-        add_action('admin_post_aichat_wa_delete_provider', [$this,'handle_delete']);
+    add_action('admin_post_aichat_connect_save_provider', [$this,'handle_save']);
+    add_action('admin_post_aichat_connect_delete_provider', [$this,'handle_delete']);
     }
 
     public function menu(){
-        // Submenú bajo el menú principal ya existente 'aichat-wa'
+        // Submenú bajo el menú principal 'aichat-connect'
         add_submenu_page(
-            'aichat-wa',
-            'AI Chat WhatsApp - Providers',
+            'aichat-connect',
+            'AI Chat Connect - Providers',
             'Providers',
             'manage_options',
-            'aichat-wa-providers',
+            'aichat-connect-providers',
             [$this,'render_list']
         );
     }
@@ -29,7 +29,7 @@ class AIChat_WA_Admin_Providers {
 
     public function render_list(){
         if (!current_user_can('manage_options')) return;
-        $repo = AIChat_WA_Repository::instance();
+        $repo = AIChat_Connect_Repository::instance();
         $providers = $repo->list_providers(false);
         $editing = null;
         if ( isset($_GET['edit']) ) {
@@ -54,7 +54,7 @@ class AIChat_WA_Admin_Providers {
         echo '</tr></thead><tbody>';
         if ($providers){
             foreach ($providers as $p){
-                $edit_url = esc_url(add_query_arg(['page'=>'aichat-wa-providers','edit'=>$p['id']], admin_url('admin.php')));
+                $edit_url = esc_url(add_query_arg(['page'=>'aichat-connect-providers','edit'=>$p['id']], admin_url('admin.php')));
                 // Delete deshabilitado: no hay botón de borrar.
                 echo '<tr>';
                 echo '<td><span class="text-muted">'.(int)$p['id'].'</span></td>';
@@ -77,9 +77,9 @@ class AIChat_WA_Admin_Providers {
             echo '<div class="card-header py-2"><strong><i class="bi bi-pencil-square"></i> Editar Provider</strong></div>';
             echo '<div class="card-body">';
             echo '<form method="post" action="'.esc_url($this->get_actions_base()).'" class="row g-3">';
-            echo '<input type="hidden" name="action" value="aichat_wa_save_provider" />';
+            echo '<input type="hidden" name="action" value="aichat_connect_save_provider" />';
             echo '<input type="hidden" name="id" value="'.(int)$row['id'].'" />';
-            wp_nonce_field('aichat_wa_save_provider');
+            wp_nonce_field('aichat_connect_save_provider');
             echo '<div class="col-12 col-md-4">';
             echo '<label class="form-label">Clave</label>';
             echo '<div class="form-control-plaintext"><code>'.esc_html($row['provider_key']).'</code></div>';
@@ -131,7 +131,7 @@ class AIChat_WA_Admin_Providers {
             echo '</div>';
             echo '<div class="col-12">';
             echo '<button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar cambios</button>';
-            echo ' <a href="'.esc_url(admin_url('admin.php?page=aichat-wa-providers')).'" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Cancelar</a>';
+            echo ' <a href="'.esc_url(admin_url('admin.php?page=aichat-connect-providers')).'" class="btn btn-outline-secondary"><i class="bi bi-x"></i> Cancelar</a>';
             echo '</div>';
             echo '</form>';
             echo '</div></div>';
@@ -141,11 +141,11 @@ class AIChat_WA_Admin_Providers {
 
     public function handle_save(){
         if (!current_user_can('manage_options')) wp_die('Unauthorized');
-        check_admin_referer('aichat_wa_save_provider');
+    check_admin_referer('aichat_connect_save_provider');
         $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-        if (!$id) { wp_safe_redirect(admin_url('admin.php?page=aichat-wa-providers')); exit; }
-        $existing = AIChat_WA_Repository::instance()->get_provider($id);
-        if (!$existing){ wp_safe_redirect(admin_url('admin.php?page=aichat-wa-providers')); exit; }
+    if (!$id) { wp_safe_redirect(admin_url('admin.php?page=aichat-connect-providers')); exit; }
+        $existing = AIChat_Connect_Repository::instance()->get_provider($id);
+    if (!$existing){ wp_safe_redirect(admin_url('admin.php?page=aichat-connect-providers')); exit; }
         // Solo campos configurables
         $data = [
             'id' => $id,
@@ -160,15 +160,15 @@ class AIChat_WA_Admin_Providers {
             'fallback_message' => sanitize_text_field($_POST['fallback_message'] ?? $existing['fallback_message']),
             'meta' => wp_unslash($_POST['meta'] ?? $existing['meta']),
         ];
-        AIChat_WA_Repository::instance()->upsert_provider($data);
-        wp_safe_redirect( admin_url('admin.php?page=aichat-wa-providers&saved=1') );
+        AIChat_Connect_Repository::instance()->upsert_provider($data);
+    wp_safe_redirect( admin_url('admin.php?page=aichat-connect-providers&saved=1') );
         exit;
     }
 
     public function handle_delete(){
         if (!current_user_can('manage_options')) wp_die('Unauthorized');
         // Desactivado: no se permite borrar providers desde la UI
-        wp_safe_redirect( admin_url('admin.php?page=aichat-wa-providers') );
+    wp_safe_redirect( admin_url('admin.php?page=aichat-connect-providers') );
         exit;
     }
 }
