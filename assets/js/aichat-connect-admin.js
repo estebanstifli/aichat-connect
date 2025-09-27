@@ -6,8 +6,8 @@
     if(!provider || !bot) return;
     function loadBots(){
       const svc = provider.value;
-      bot.innerHTML = '<option>Cargando...</option>';
-  fetch((window.ajaxurl || '') + '?action=aichat_connect_list_bots&service=' + encodeURIComponent(svc))
+      bot.innerHTML = '<option>Loading...</option>';
+      fetch((window.ajaxurl || '') + '?action=aichat_connect_list_bots&service=' + encodeURIComponent(svc))
         .then(r=>r.json())
         .then(j=>{
           bot.innerHTML='';
@@ -21,7 +21,7 @@
               });
               if(!bot.value && bot.options.length) bot.selectedIndex=0;
             } else {
-              bot.innerHTML='<option value="">(sin bots)</option>';
+              bot.innerHTML='<option value="">(no bots)</option>';
             }
         })
         .catch(()=>{ bot.innerHTML='<option value="">Error</option>'; });

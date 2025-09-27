@@ -68,6 +68,7 @@ class AIChat_Connect_Repository {
     // CRUD for numbers mapping
     public function list_numbers(){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $t is a trusted table name built from $wpdb->prefix.
         return $wpdb->get_results("SELECT * FROM $t ORDER BY phone ASC", ARRAY_A);
     }
 
@@ -122,29 +123,17 @@ class AIChat_Connect_Repository {
     public function list_conversation_groups($limit = 200){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_messages';
         $limit = absint($limit) ?: 200;
-        // Contabilizamos como "saliente" cualquier fila direction='out' y también las respuestas del bot
-        // que se almacenan en la misma fila de entrada (direction='in' con bot_response no vacío)
-        $sql = "
-            SELECT
-                DATE(created_at) AS day,
-                phone,
-                -- Entrantes: filas marcadas como 'in'
+        // Build SQL without user input except LIMIT (cast above). Table name is trusted.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $t and $limit are sanitized.
+        $sql = "SELECT DATE(created_at) AS day, phone,
                 SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) AS in_count,
-                -- Salientes: filas 'out' + respuestas en filas 'in'
-                SUM(CASE WHEN direction='out' THEN 1
-                         WHEN direction='in' AND bot_response IS NOT NULL AND bot_response <> '' THEN 1
-                         ELSE 0 END) AS out_count,
-                -- Total lógico: in_count + out_count
-                (
-                    SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) +
-                    SUM(CASE WHEN direction='out' THEN 1 WHEN direction='in' AND bot_response IS NOT NULL AND bot_response <> '' THEN 1 ELSE 0 END)
-                ) AS total,
+                SUM(CASE WHEN direction='out' THEN 1 WHEN direction='in' AND bot_response IS NOT NULL AND bot_response <> '' THEN 1 ELSE 0 END) AS out_count,
+                ( SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) + SUM(CASE WHEN direction='out' THEN 1 WHEN direction='in' AND bot_response IS NOT NULL AND bot_response <> '' THEN 1 ELSE 0 END) ) AS total,
                 MAX(created_at) AS last_at
-            FROM $t
-            GROUP BY DATE(created_at), phone
-            ORDER BY day DESC, phone ASC
-            LIMIT $limit
-        ";
+                FROM $t
+                GROUP BY DATE(created_at), phone
+                ORDER BY day DESC, phone ASC
+                LIMIT $limit";
         return $wpdb->get_results($sql, ARRAY_A);
     }
 
@@ -163,8 +152,9 @@ class AIChat_Connect_Repository {
     /* ================= PROVIDERS CRUD ================= */
     public function list_providers($only_active = false){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_providers';
-        $sql = "SELECT * FROM $t" . ($only_active? " WHERE is_active=1" : '') . " ORDER BY name ASC";
-        return $wpdb->get_results($sql, ARRAY_A);
+        $where = $only_active ? ' WHERE is_active=1' : '';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $t and $where are controlled strings.
+        return $wpdb->get_results("SELECT * FROM $t$where ORDER BY name ASC", ARRAY_A);
     }
 
     public function get_provider($id){

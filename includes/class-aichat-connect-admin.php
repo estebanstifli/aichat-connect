@@ -6,6 +6,14 @@ class AIChat_Connect_Admin {
     private $assets_loaded = false;
     public static function instance(){ if(!self::$instance){ self::$instance = new self(); } return self::$instance; }
     private function __construct(){
+        // Defensive guard: in algunos entornos la inclusión del repositorio puede no haberse ejecutado aún
+        // (subida incompleta, rename del archivo principal, instancia prematura). Aseguramos su carga.
+        if ( ! class_exists('AIChat_Connect_Repository') && defined('AICHAT_CONNECT_DIR') ) {
+            $repo_file = AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-repository.php';
+            if ( file_exists( $repo_file ) ) {
+                require_once $repo_file; // phpcs:ignore WordPressVIPMinimum.Files.IncludingFile.UsingVariable
+            }
+        }
         add_action('admin_menu', [$this,'menu']);
         add_action('admin_init', [$this,'register_settings']);
     add_action('admin_post_aichat_connect_save_number', [$this,'handle_save_number']);
@@ -126,9 +134,62 @@ class AIChat_Connect_Admin {
     }
 
     public function register_settings(){
-    register_setting('aichat_connect','aichat_connect_access_token');
-    register_setting('aichat_connect','aichat_connect_default_phone_id');
-    register_setting('aichat_connect','aichat_connect_verify_token');
+        register_setting(
+            'aichat_connect',
+            'aichat_connect_access_token',
+            [
+                'type'              => 'string',
+                'sanitize_callback' => [ __CLASS__, 'sanitize_access_token' ],
+                'show_in_rest'      => false,
+            ]
+        );
+        register_setting(
+            'aichat_connect',
+            'aichat_connect_default_phone_id',
+            [
+                'type'              => 'string',
+                'sanitize_callback' => [ __CLASS__, 'sanitize_phone_id' ],
+                'show_in_rest'      => false,
+            ]
+        );
+        register_setting(
+            'aichat_connect',
+            'aichat_connect_verify_token',
+            [
+                'type'              => 'string',
+                'sanitize_callback' => [ __CLASS__, 'sanitize_verify_token' ],
+                'show_in_rest'      => false,
+            ]
+        );
+    }
+
+    /* ================= Sanitization Callbacks (PluginCheck) ================= */
+    public static function sanitize_access_token( $value ){
+        // Trim whitespace, remove control chars, keep printable ASCII + extended utf-8.
+        if ( ! is_string( $value ) ) { return ''; }
+        $value = trim( $value );
+        // Tokens de Meta suelen ser largos, limitamos a 255 para DB/options seguridad.
+        if ( strlen( $value ) > 255 ) { $value = substr( $value, 0, 255 ); }
+        // Eliminamos caracteres de control invisibles.
+        $value = preg_replace('/[\x00-\x1F\x7F]/u', '', $value);
+        return $value;
+    }
+
+    public static function sanitize_phone_id( $value ){
+        if ( ! is_string( $value ) ) { return ''; }
+        $value = preg_replace('/[^0-9]/', '', $value); // Solo dígitos
+        // Longitud típica 10-20, limitamos a 30 por seguridad.
+        if ( strlen( $value ) > 30 ) { $value = substr( $value, 0, 30 ); }
+        return $value;
+    }
+
+    public static function sanitize_verify_token( $value ){
+        if ( ! is_string( $value ) ) { return ''; }
+        $value = trim( $value );
+        // Permitimos alfanumérico + guiones y subrayados; eliminamos lo demás.
+        $value = preg_replace('/[^A-Za-z0-9_-]/', '', $value);
+        if ( strlen( $value ) > 64 ) { $value = substr( $value, 0, 64 ); }
+        return $value;
     }
 
     public function render_mappings(){
@@ -229,8 +290,8 @@ class AIChat_Connect_Admin {
     echo '<label class="form-label">'.esc_html__('Provider','aichat-connect').'</label>';
         echo '<select name="service" id="aichat-wa-provider" class="form-select">';
         foreach ($providers_active as $p){
-            $sel = selected($current_service, $p['provider_key'], false);
-            echo '<option value="'.esc_attr($p['provider_key']).'" '.$sel.'>'.esc_html($p['name']).'</option>';
+            $selected_attr = selected($current_service, $p['provider_key'], false);
+            echo '<option value="'.esc_attr($p['provider_key']).'"'.($selected_attr ? ' selected="selected"' : '').'>'.esc_html($p['name']).'</option>';
         }
         echo '</select>';
         echo '</div>';
@@ -241,8 +302,8 @@ class AIChat_Connect_Admin {
         if (!empty($bots)){
             foreach($bots as $b){
                 $slug = $b['slug']; $name = $b['name'];
-                $sel = selected($row['bot_slug'], $slug, false);
-                echo '<option value="'.esc_attr($slug).'" '.$sel.'>'.esc_html($name).' ('.esc_html($slug).')</option>';
+                $selected_attr = selected($row['bot_slug'], $slug, false);
+                echo '<option value="'.esc_attr($slug).'"'.($selected_attr ? ' selected="selected"' : '').'>'.esc_html($name).' ('.esc_html($slug).')</option>';
             }
         } else {
             echo '<option value="">'.esc_html__('-- select provider --','aichat-connect').'</option>';
@@ -299,7 +360,7 @@ class AIChat_Connect_Admin {
         echo '<div class="card-header py-2"><strong><i class="bi bi-link-45deg"></i> Webhook Meta</strong></div>';
         echo '<div class="card-body small">';
     echo '<p>'.esc_html__('Use this URL in your Meta App (WhatsApp Cloud API) configuration:','aichat-connect').'</p>';
-        echo '<div class="mb-2"><code style="user-select:all">'.$webhook.'</code></div>';
+    echo '<div class="mb-2"><code style="user-select:all">'.esc_html($webhook).'</code></div>';
         echo '<ul class="mb-3 ps-3">';
     echo '<li>'.esc_html__('Method: GET (verification) and POST (messages)','aichat-connect').'</li>';
     echo '<li>'.esc_html__('Set the Verify Token exactly as configured below.','aichat-connect').'</li>';
@@ -517,6 +578,7 @@ class AIChat_Connect_Admin {
         echo '<div class="card shadow-sm mb-4">';
         echo '<div class="card-header py-2 d-flex justify-content-between align-items-center">';
         echo '<div><strong><i class="bi bi-telephone"></i> '.esc_html($phone).'</strong> <span class="text-muted ms-2"><i class="bi bi-calendar-event"></i> '.esc_html($day).'</span></div>';
+    // translators: %d is the number of messages in the conversation for the selected day/phone.
     echo '<span class="badge text-bg-secondary">'.sprintf(esc_html__('%d messages','aichat-connect'), count($messages)).'</span>';
         echo '</div>';
         echo '<div class="card-body aichat-wa-conversation">';

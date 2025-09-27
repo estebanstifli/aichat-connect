@@ -5,6 +5,8 @@ class AIChat_Connect_Service {
     private static $instance;
     private $repo;
     private $api;
+    // Cache de normalización simple para no recalcular en bucles (no crítico, pero micro-optimización)
+    private $normalized_cache = [];
 
     public static function instance(){ if(!self::$instance){ self::$instance = new self(); } return self::$instance; }
 
@@ -101,10 +103,28 @@ class AIChat_Connect_Service {
             }
         } else {
             // AI Chat (core)
-            if (!function_exists('aichat_generate_bot_response')){
+            $has_new = function_exists('aichat_generate_bot_response_for_phone');
+            $has_legacy = function_exists('aichat_generate_bot_response');
+            if (!$has_new && !$has_legacy){
                 $result = new WP_Error('aichat_core_missing', 'AI Chat core plugin no disponible.');
             } else {
-                $result = call_user_func('aichat_generate_bot_response', $bot_slug, $body_text, $session_id, [ 'source_channel' => 'whatsapp' ]);
+                $normalized = $this->normalize_user_phone($phone);
+                // Contexto extendido base (común a ambas funciones)
+                $core_context = [
+                    'source_channel'     => 'whatsapp',
+                    'user_phone'         => $phone,            // original tal cual llegó
+                    'user_phone_normal'  => $normalized,       // E164 o limpio
+                    'business_phone_id'  => $business_id,
+                    'session_id'         => $session_id,
+                ];
+                $core_context = apply_filters('aichat_connect_core_context_args', $core_context, $bot_slug, $phone, $business_id);
+                if ($has_new) {
+                    // Nueva función oficial: $resp = aichat_generate_bot_response_for_phone($bot_slug, $phoneNumberE164, $texto, $args)
+                    $result = call_user_func('aichat_generate_bot_response_for_phone', $bot_slug, $normalized, $body_text, $core_context);
+                } else {
+                    // Fallback a función antigua (mantiene compatibilidad con versiones previas del core)
+                    $result = call_user_func('aichat_generate_bot_response', $bot_slug, $body_text, $session_id, $core_context);
+                }
             }
         }
         $t_provider_end = microtime(true);
@@ -242,5 +262,26 @@ class AIChat_Connect_Service {
             aichat_connect_log_debug('Manual outbound ok', [ 'phone'=>$phone ]);
         }
         return $resp;
+    }
+
+    /**
+     * Normaliza el teléfono de usuario hacia un formato tipo E164 simplificado (sin + si no existe, sólo dígitos)
+     * No intenta validar país; deja que un filtro lo refine si se necesita.
+     * Filtro: aichat_connect_normalize_user_phone( string $normalized, string $raw )
+     */
+    private function normalize_user_phone($raw){
+        if (!is_string($raw) || $raw==='') return '';
+        if (isset($this->normalized_cache[$raw])) return $this->normalized_cache[$raw];
+        $digits = preg_replace('/[^0-9]/','', $raw);
+        // Si el original empezaba con + y tenemos dígitos, conservamos indicación (sin espacios)
+        if (strpos($raw, '+') === 0) {
+            $normalized = '+' . $digits;
+        } else {
+            $normalized = $digits; // Core podría inferir país si implementa lógica futura
+        }
+        $normalized = substr($normalized, 0, 30); // límite defensivo
+        $normalized = apply_filters('aichat_connect_normalize_user_phone', $normalized, $raw);
+        $this->normalized_cache[$raw] = $normalized;
+        return $normalized;
     }
 }

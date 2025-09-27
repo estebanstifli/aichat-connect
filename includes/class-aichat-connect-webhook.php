@@ -45,7 +45,9 @@ class AIChat_Connect_Webhook {
             nocache_headers();
             header('Content-Type: text/plain; charset=utf-8');
             status_header(200);
-            echo $challenge; // no esc_html: debe coincidir exactamente
+            // Output the challenge directly as required by Meta verification. It should be a numeric token.
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Meta requires exact echo of the challenge token.
+            echo $challenge;
             exit;
         }
     aichat_connect_log_debug('Webhook verify failed');

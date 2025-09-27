@@ -6,6 +6,8 @@
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: estebandezafra
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: aichat-connect
  * Domain Path: /languages
  */
@@ -35,6 +37,7 @@ if ( ! function_exists( 'aichat_connect_log_debug' ) ) {
             $json = wp_json_encode( $safe );
             if ( $json ) { $message .= ' | ' . $json; }
         }
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug logging guarded by constant.
         error_log( '[AIChat-CONNECT] ' . $message );
     }
 }
@@ -42,7 +45,6 @@ if ( ! function_exists( 'aichat_connect_log_debug' ) ) {
 // Includes
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-activator.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-api-client.php';
-require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-repository.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-service.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-webhook.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-admin.php';
@@ -55,16 +57,12 @@ add_action('admin_init', ['AIChat_Connect_Activator','maybe_update_schema']);
 
 // Bootstrap
 add_action('plugins_loaded', function(){
-    // Load translations
-    load_plugin_textdomain('aichat-connect', false, dirname(plugin_basename(__FILE__)).'/languages');
     $core_active = function_exists('aichat_generate_bot_response');
-    if (!$core_active) {
-        // Mostrar aviso pero igualmente habilitar webhook para usar AI Engine u otros servicios.
+    if ( ! $core_active ) {
         add_action('admin_notices', function(){
             echo '<div class="notice notice-error"><p>'.esc_html__('AI Chat Connect: the core AI Chat plugin is not active. Mappings using service "AI Chat" will fail, but "AI Engine" mappings will still attempt to respond.','aichat-connect').'</p></div>';
         });
     }
-    // Siempre cargamos webhook y admin para permitir uso con AI Engine / futuros proveedores.
     AIChat_Connect_Webhook::instance();
     AIChat_Connect_Admin::instance();
     AIChat_Connect_Admin_Providers::instance();
