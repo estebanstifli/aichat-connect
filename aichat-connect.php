@@ -1,12 +1,12 @@
 <?php
 /**
  * Plugin Name: AI Chat Connect
- * Description: Integración de WhatsApp (Meta Cloud API) para el plugin AI Chat. Enruta mensajes entrantes a los bots existentes y responde automáticamente.
+ * Description: WhatsApp (Meta Cloud API) integration for the AI Chat plugin. Routes incoming messages to existing bots and replies automatically.
  * Version: 0.1.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: estebandezafra
- * Text Domain: ai-chat-connect
+ * Text Domain: aichat-connect
  * Domain Path: /languages
  */
 
@@ -18,7 +18,7 @@ define('AICHAT_CONNECT_DIR', plugin_dir_path(__FILE__));
 define('AICHAT_CONNECT_URL', plugin_dir_url(__FILE__));
 // Enable temporary debug by defining in wp-config.php or uncomment next line.
 if (!defined('AICHAT_CONNECT_DEBUG')) {
-    define('AICHAT_CONNECT_DEBUG', true); // Cambia a false en producción.
+    define('AICHAT_CONNECT_DEBUG', true); // Set to false in production.
 }
 
 // Debug helper similar to core plugin but scoped to CONNECT addon
@@ -55,11 +55,13 @@ add_action('admin_init', ['AIChat_Connect_Activator','maybe_update_schema']);
 
 // Bootstrap
 add_action('plugins_loaded', function(){
+    // Load translations
+    load_plugin_textdomain('aichat-connect', false, dirname(plugin_basename(__FILE__)).'/languages');
     $core_active = function_exists('aichat_generate_bot_response');
     if (!$core_active) {
         // Mostrar aviso pero igualmente habilitar webhook para usar AI Engine u otros servicios.
         add_action('admin_notices', function(){
-            echo '<div class="notice notice-error"><p>AI Chat - WhatsApp Addon: el plugin principal AI Chat no está activo. Las integraciones configuradas con servicio "AI Chat" fallarán, pero las de "AI Engine" seguirán intentando responder.</p></div>';
+            echo '<div class="notice notice-error"><p>'.esc_html__('AI Chat Connect: the core AI Chat plugin is not active. Mappings using service "AI Chat" will fail, but "AI Engine" mappings will still attempt to respond.','aichat-connect').'</p></div>';
         });
     }
     // Siempre cargamos webhook y admin para permitir uso con AI Engine / futuros proveedores.

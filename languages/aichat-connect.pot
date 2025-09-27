@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: aichat-connect 0.1.0\n"
+"Report-Msgid-Bugs-To: https://example.com/support\n"
+"POT-Creation-Date: 2025-09-27 00:00+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: AI Chat Connect i18n bootstrap\n"
+"X-Domain: aichat-connect\n"
+
+#: includes/class-aichat-connect-admin.php
+msgid "Phone ID → Bot Mappings"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Settings"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Saved successfully"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Add"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Phone ID"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Bot"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Display"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Active"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Specific Token"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Actions"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Delete mapping?"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "No mappings"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Edit mapping"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Add mapping"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Provider"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "-- select provider --"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Display Name"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Specific Access Token"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Leave empty to use global"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Save changes"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "WhatsApp Configuration"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Mappings"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Settings saved"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Use this URL in your Meta App (WhatsApp Cloud API) configuration:"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Method: GET (verification) and POST (messages)"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Set the Verify Token exactly as configured below."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Subscribe to the messages field of the whatsapp_business_account object."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Quick guide: 1) Create App in developers.facebook.com 2) Add WhatsApp product 3) Generate System User / Token 4) Configure Webhook with URL + Verify Token 5) Subscribe events 6) Add your number/test."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Credentials & Settings"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Access Token (Graph API)"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Access token with WhatsApp Business permissions (recommended: long-lived system user)."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Default Business Phone ID"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Used if a specific mapping does not provide phone/token."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Verify Token"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Must match the one set in Meta to validate the webhook (GET)."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Save settings"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Notes"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Mappings define which bot responds for each Phone Number ID (business)."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Session context is generated as wa_{md5(user_phone)}."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Enable debug by defining AICHAT_CONNECT_DEBUG true in the main file to see detailed logs."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Providers manage timeouts, fast ack and fallback. Adjust them in the Providers tab."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "No messages for this day."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "User"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Bot"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Could not delete"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Conversations (day + phone)"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Date"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Phone"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Incoming"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Outgoing"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Total"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Last"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "View"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "No records"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Conversation detail"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Back"
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "Invalid parameters."
+msgstr ""
+
+#: includes/class-aichat-connect-admin.php
+msgid "%d messages"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "AI Chat Connect - Providers"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Providers"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Saved successfully"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Available Providers"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "System defined"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "ID"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Key"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Name"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Active"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Timeout"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Fast Ack"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Actions"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Yes"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "No"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "No records"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Edit Provider"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Description"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Timeout (ms)"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Fast Ack Message"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Timeout Action"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Silent"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Fast Ack then followup"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Send fallback message"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Fallback Message"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Meta (JSON)"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Save changes"
+msgstr ""
+
+#: includes/class-aichat-connect-admin-providers.php
+msgid "Cancel"
+msgstr ""
+
+#: aichat-connect.php
+msgid "AI Chat Connect: the core AI Chat plugin is not active. Mappings using service \"AI Chat\" will fail, but \"AI Engine\" mappings will still attempt to respond."
+msgstr ""

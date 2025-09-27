@@ -78,26 +78,26 @@ class AIChat_Connect_Activator {
         if ($exists === 0) {
             $wpdb->insert($providers, [
                 'provider_key' => 'aichat',
-                'name' => 'AI Chat Core',
-                'description' => 'Proveedor interno (plugin AI Chat).',
+                'name' => __('AI Chat Core','aichat-connect'),
+                'description' => __('Internal provider (AI Chat plugin).','aichat-connect'),
                 'is_active' => 1,
                 'timeout_ms' => 15000,
                 'fast_ack_enabled' => 0,
-                'fast_ack_message' => 'Un momento, generando respuesta...',
+                'fast_ack_message' => __('One moment, generating response...','aichat-connect'),
                 'on_timeout_action' => 'fast_ack_followup',
-                'fallback_message' => 'Lo siento, ha tardado demasiado. Intenta de nuevo.',
+                'fallback_message' => __('Sorry, it took too long. Please try again.','aichat-connect'),
                 'meta' => null,
             ]);
             $wpdb->insert($providers, [
                 'provider_key' => 'ai-engine',
-                'name' => 'AI Engine (Meow)',
-                'description' => 'Integración con AI Engine.',
+                'name' => __('AI Engine (Meow)','aichat-connect'),
+                'description' => __('Integration with AI Engine.','aichat-connect'),
                 'is_active' => 1,
                 'timeout_ms' => 20000,
                 'fast_ack_enabled' => 1,
-                'fast_ack_message' => 'Procesando tu mensaje, un instante...',
+                'fast_ack_message' => __('Processing your message, just a moment...','aichat-connect'),
                 'on_timeout_action' => 'fallback_message',
-                'fallback_message' => 'Ahora mismo no pude responder. Vuelve a intentarlo en breve.',
+                'fallback_message' => __('I could not reply right now. Please try again shortly.','aichat-connect'),
                 'meta' => null,
             ]);
         }

@@ -32,8 +32,8 @@ class AIChat_Connect_Admin {
         if (!$this->is_plugin_screen()) return;
         if ($this->assets_loaded) return;
 
-        $plugin_main = dirname(__DIR__) . '/aichat-whatsapp.php';
-        $base = plugin_dir_url($plugin_main);
+    // Use defined constant instead of hardcoded legacy main file name
+    $base = AICHAT_CONNECT_URL;
 
         wp_enqueue_style(
             'aichat-connect-bootstrap',
@@ -78,8 +78,8 @@ class AIChat_Connect_Admin {
     public function menu(){
         // Menú principal apuntando a Mapeos (gestión de phone IDs → bots)
         add_menu_page(
-            'AI Chat Connect',
-            'AI Chat Connect',
+            __('AI Chat Connect','aichat-connect'),
+            __('AI Chat Connect','aichat-connect'),
             'manage_options',
             'aichat-connect',
             [$this,'render_mappings'],
@@ -89,8 +89,8 @@ class AIChat_Connect_Admin {
         // Submenú Mapeos (alias explícito) para claridad
         add_submenu_page(
             'aichat-connect',
-            'AI Chat Connect - Mapeos',
-            'Mapeos',
+            __('AI Chat Connect - Mappings','aichat-connect'),
+            __('Mappings','aichat-connect'),
             'manage_options',
             'aichat-connect',
             [$this,'render_mappings']
@@ -98,8 +98,8 @@ class AIChat_Connect_Admin {
         // Submenú Settings con configuración + guía
         add_submenu_page(
             'aichat-connect',
-            'AI Chat Connect - Settings',
-            'Settings',
+            __('AI Chat Connect - Settings','aichat-connect'),
+            __('Settings','aichat-connect'),
             'manage_options',
             'aichat-connect-settings',
             [$this,'render_settings']
@@ -107,8 +107,8 @@ class AIChat_Connect_Admin {
         // Logs
         add_submenu_page(
             'aichat-connect',
-            'AI Chat Connect - Logs',
-            'Logs',
+            __('AI Chat Connect - Logs','aichat-connect'),
+            __('Logs','aichat-connect'),
             'manage_options',
             'aichat-connect-logs',
             [$this,'render_logs']
@@ -116,7 +116,7 @@ class AIChat_Connect_Admin {
         // Detalle de logs oculto
         add_submenu_page(
             null,
-            'AI Chat Connect - Logs (detalle)',
+            __('AI Chat Connect - Logs (detail)','aichat-connect'),
             '__HIDDEN__',
             'manage_options',
             'aichat-connect-logs-detail',
@@ -137,25 +137,25 @@ class AIChat_Connect_Admin {
         $numbers = $repo->list_numbers();
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center mb-4 gap-2">';
-        echo '<h1 class="h3 m-0"><i class="bi bi-diagram-3 text-success"></i> Mapeos Phone ID → Bot</h1>';
-    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-settings')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Settings</a>';
+        echo '<h1 class="h3 m-0"><i class="bi bi-diagram-3 text-success"></i> '.esc_html__('Phone ID → Bot Mappings','aichat-connect').'</h1>';
+    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-settings')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> '.esc_html__('Settings','aichat-connect').'</a>';
         echo '</div>';
 
         // Mensajes de estado
         if ( isset($_GET['updated']) ){
-            echo '<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle-fill me-2"></i>Guardado correctamente<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            echo '<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle-fill me-2"></i>'.esc_html__('Saved successfully','aichat-connect').'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         }
 
         // Tabla mapeos
         echo '<div class="card mb-5 shadow-sm">';
         echo '<div class="card-header d-flex justify-content-between align-items-center py-2">';
-        echo '<span class="fw-semibold"><i class="bi bi-link-45deg"></i> Mapeos Phone ID → Bot</span>';
-        echo '<a href="#aichat-wa-form" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> Añadir</a>';
+    echo '<span class="fw-semibold"><i class="bi bi-link-45deg"></i> '.esc_html__('Phone ID → Bot Mappings','aichat-connect').'</span>';
+    echo '<a href="#aichat-wa-form" class="btn btn-sm btn-primary"><i class="bi bi-plus-lg"></i> '.esc_html__('Add','aichat-connect').'</a>';
         echo '</div>';
         echo '<div class="table-responsive">';
         echo '<table class="table table-sm table-striped table-hover align-middle mb-0">';
         echo '<thead class="table-light"><tr>';
-        echo '<th>Phone ID</th><th>Bot</th><th>Display</th><th>Activo</th><th>Token específico</th><th class="text-end">Acciones</th>';
+    echo '<th>'.esc_html__('Phone ID','aichat-connect').'</th><th>'.esc_html__('Bot','aichat-connect').'</th><th>'.esc_html__('Display','aichat-connect').'</th><th>'.esc_html__('Active','aichat-connect').'</th><th>'.esc_html__('Specific Token','aichat-connect').'</th><th class="text-end">'.esc_html__('Actions','aichat-connect').'</th>';
         echo '</tr></thead><tbody>';
         if ($numbers){
             foreach($numbers as $n){
@@ -171,16 +171,16 @@ class AIChat_Connect_Admin {
                 echo '<td><code>'.esc_html($n['phone']).'</code></td>';
                 echo '<td><span class="badge text-bg-secondary">'.esc_html($n['bot_slug']).'</span></td>';
                 echo '<td>'.esc_html($n['display_name']).'</td>';
-                echo '<td>'.($n['is_active'] ? '<span class="badge text-bg-success">Sí</span>' : '<span class="badge text-bg-danger">No</span>').'</td>';
+                echo '<td>'.($n['is_active'] ? '<span class="badge text-bg-success">'.esc_html__('Yes','aichat-connect').'</span>' : '<span class="badge text-bg-danger">'.esc_html__('No','aichat-connect').'</span>').'</td>';
                 echo '<td>'.($n['access_token']? '<i class="bi bi-key-fill text-warning" title="Tiene token"></i>' : '<span class="text-muted">—</span>').'</td>';
                 echo '<td class="text-end">';
                 echo '<a class="btn btn-sm btn-outline-primary me-1" href="'.esc_url($edit_url).'"><i class="bi bi-pencil-square"></i></a>';
-                echo '<a class="btn btn-sm btn-outline-danger" href="'.esc_url($del_url).'" onclick="return confirm(\'¿Eliminar?\')"><i class="bi bi-trash"></i></a>';
+                echo '<a class="btn btn-sm btn-outline-danger" href="'.esc_url($del_url).'" onclick="return confirm(\''.esc_js(__('Delete mapping?','aichat-connect')).'\')"><i class="bi bi-trash"></i></a>';
                 echo '</td>';
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> Sin mapeos</td></tr>';
+            echo '<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> '.esc_html__('No mappings','aichat-connect').'</td></tr>';
         }
         echo '</tbody></table></div></div>';
 
@@ -210,7 +210,10 @@ class AIChat_Connect_Admin {
     $providers_active = AIChat_Connect_Repository::instance()->list_providers(true);
 
         echo '<div class="card shadow-sm mb-5" id="aichat-wa-form">';
-        echo '<div class="card-header py-2"><strong>'.($editing?'<i class="bi bi-pencil-square"></i> Editar':'<i class="bi bi-plus-circle"></i> Añadir').' mapeo</strong></div>';
+    echo '<div class="card-header py-2"><strong>'.( $editing
+        ? '<i class="bi bi-pencil-square"></i> '.esc_html__('Edit mapping','aichat-connect')
+        : '<i class="bi bi-plus-circle"></i> '.esc_html__('Add mapping','aichat-connect')
+    ).'</strong></div>';
         echo '<div class="card-body">';
         echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'" class="row g-3">';
     echo '<input type="hidden" name="action" value="aichat_connect_save_number">';
@@ -218,12 +221,12 @@ class AIChat_Connect_Admin {
     wp_nonce_field('aichat_connect_save_number');
 
         echo '<div class="col-md-4">';
-        echo '<label class="form-label">Phone ID (Meta) <span class="text-danger">*</span></label>';
+    echo '<label class="form-label">'.esc_html__('Phone ID (Meta)','aichat-connect').' <span class="text-danger">*</span></label>';
         echo '<input type="text" class="form-control" name="phone" value="'.esc_attr($row['phone']).'" required placeholder="123456789012345">';
         echo '</div>';
 
         echo '<div class="col-md-3">';
-        echo '<label class="form-label">Provider</label>';
+    echo '<label class="form-label">'.esc_html__('Provider','aichat-connect').'</label>';
         echo '<select name="service" id="aichat-wa-provider" class="form-select">';
         foreach ($providers_active as $p){
             $sel = selected($current_service, $p['provider_key'], false);
@@ -233,7 +236,7 @@ class AIChat_Connect_Admin {
         echo '</div>';
 
         echo '<div class="col-md-3">';
-        echo '<label class="form-label">Bot</label>';
+    echo '<label class="form-label">'.esc_html__('Bot','aichat-connect').'</label>';
         echo '<select name="bot_slug" id="aichat-wa-bot" class="form-select" data-current="'.esc_attr($row['bot_slug']).'">';
         if (!empty($bots)){
             foreach($bots as $b){
@@ -242,30 +245,30 @@ class AIChat_Connect_Admin {
                 echo '<option value="'.esc_attr($slug).'" '.$sel.'>'.esc_html($name).' ('.esc_html($slug).')</option>';
             }
         } else {
-            echo '<option value="">-- selecciona provider --</option>';
+            echo '<option value="">'.esc_html__('-- select provider --','aichat-connect').'</option>';
         }
         echo '</select>';
         echo '</div>';
 
         echo '<div class="col-md-4">';
-        echo '<label class="form-label">Display Name</label>';
+    echo '<label class="form-label">'.esc_html__('Display Name','aichat-connect').'</label>';
         echo '<input type="text" class="form-control" name="display_name" value="'.esc_attr($row['display_name']).'">';
         echo '</div>';
 
         echo '<div class="col-md-8">';
-        echo '<label class="form-label">Access Token específico</label>';
-        echo '<input type="text" class="form-control" name="access_token" value="'.esc_attr($row['access_token']).'" placeholder="Dejar vacío para usar el global">';
+    echo '<label class="form-label">'.esc_html__('Specific Access Token','aichat-connect').'</label>';
+    echo '<input type="text" class="form-control" name="access_token" value="'.esc_attr($row['access_token']).'" placeholder="'.esc_attr__('Leave empty to use global','aichat-connect').'">';
         echo '</div>';
 
         echo '<div class="col-md-2 d-flex align-items-end">';
         echo '<div class="form-check">';
         echo '<input class="form-check-input" type="checkbox" name="is_active" value="1" '.checked(1,(int)$row['is_active'],false).'>';
-        echo '<label class="form-check-label">Activo</label>';
+    echo '<label class="form-check-label">'.esc_html__('Active','aichat-connect').'</label>';
         echo '</div>';
         echo '</div>';
 
         echo '<div class="col-12">';
-        submit_button($editing? 'Guardar cambios':'Añadir mapeo','primary','submit',false,['class'=>'btn btn-primary']);
+    submit_button($editing? __('Save changes','aichat-connect'):__('Add mapping','aichat-connect'),'primary','submit',false,['class'=>'btn btn-primary']);
         echo '</div>';
 
         echo '</form>';
@@ -283,11 +286,11 @@ class AIChat_Connect_Admin {
     $verify_token = get_option('aichat_connect_verify_token','');
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center mb-4 gap-2">';
-        echo '<h1 class="h3 m-0"><i class="bi bi-gear-wide-connected text-success"></i> Configuración WhatsApp</h1>';
-    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-diagram-3"></i> Mapeos</a>';
+        echo '<h1 class="h3 m-0"><i class="bi bi-gear-wide-connected text-success"></i> '.esc_html__('WhatsApp Configuration','aichat-connect').'</h1>';
+    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-diagram-3"></i> '.esc_html__('Mappings','aichat-connect').'</a>';
         echo '</div>';
         if ( isset($_GET['updated']) ) {
-            echo '<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>Configuración guardada<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            echo '<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>'.esc_html__('Settings saved','aichat-connect').'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         }
         echo '<div class="row g-4">';
         // Card Webhook Info
@@ -295,52 +298,52 @@ class AIChat_Connect_Admin {
         echo '<div class="card shadow-sm">';
         echo '<div class="card-header py-2"><strong><i class="bi bi-link-45deg"></i> Webhook Meta</strong></div>';
         echo '<div class="card-body small">';
-        echo '<p>Usa esta URL en la configuración de tu App de Meta (WhatsApp Cloud API):</p>';
+    echo '<p>'.esc_html__('Use this URL in your Meta App (WhatsApp Cloud API) configuration:','aichat-connect').'</p>';
         echo '<div class="mb-2"><code style="user-select:all">'.$webhook.'</code></div>';
         echo '<ul class="mb-3 ps-3">';
-        echo '<li>Method: <strong>GET</strong> (verificación) y <strong>POST</strong> (mensajes)</li>';
-        echo '<li>Coloca el <em>Verify Token</em> exactamente como lo configures abajo.</li>';
-        echo '<li>Asegúrate de suscribirte a los campos <code>messages</code> del objeto <code>whatsapp_business_account</code>.</li>';
+    echo '<li>'.esc_html__('Method: GET (verification) and POST (messages)','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Set the Verify Token exactly as configured below.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Subscribe to the messages field of the whatsapp_business_account object.','aichat-connect').'</li>';
         echo '</ul>';
-        echo '<p class="text-muted">Guía rápida: 1) Crea App en developers.facebook.com 2) Añade producto WhatsApp 3) Genera un <em>System User</em> / Token 4) Configura Webhook con URL + Verify Token 5) Suscribe eventos. 6) Añade tu número/test.</p>';
+    echo '<p class="text-muted">'.esc_html__('Quick guide: 1) Create App in developers.facebook.com 2) Add WhatsApp product 3) Generate System User / Token 4) Configure Webhook with URL + Verify Token 5) Subscribe events 6) Add your number/test.','aichat-connect').'</p>';
         echo '</div></div></div>';
         // Card Settings Form
         echo '<div class="col-12 col-xl-6">';
         echo '<div class="card shadow-sm">';
-        echo '<div class="card-header py-2"><strong><i class="bi bi-sliders"></i> Credenciales & Ajustes</strong></div>';
+    echo '<div class="card-header py-2"><strong><i class="bi bi-sliders"></i> '.esc_html__('Credentials & Settings','aichat-connect').'</strong></div>';
         echo '<div class="card-body">';
         echo '<form method="post" action="options.php" class="row g-3">';
     settings_fields('aichat_connect');
         echo '<div class="col-12">';
-        echo '<label class="form-label">Access Token (Graph API) <span class="text-danger">*</span></label>';
+    echo '<label class="form-label">'.esc_html__('Access Token (Graph API)','aichat-connect').' <span class="text-danger">*</span></label>';
     echo '<input type="text" name="aichat_connect_access_token" class="form-control" value="'.esc_attr($access_token).'" placeholder="EAAG..." />';
-        echo '<div class="form-text">Token de acceso con permisos de WhatsApp Business (recomendado: system user de larga duración).</div>';
+    echo '<div class="form-text">'.esc_html__('Access token with WhatsApp Business permissions (recommended: long-lived system user).','aichat-connect').'</div>';
         echo '</div>';
         echo '<div class="col-12 col-md-6">';
-        echo '<label class="form-label">Default Business Phone ID</label>';
+    echo '<label class="form-label">'.esc_html__('Default Business Phone ID','aichat-connect').'</label>';
     echo '<input type="text" name="aichat_connect_default_phone_id" class="form-control" value="'.esc_attr($default_phone).'" placeholder="123456789012345" />';
-        echo '<div class="form-text">Se usa si un mapeo específico no provee phone/token.</div>';
+    echo '<div class="form-text">'.esc_html__('Used if a specific mapping does not provide phone/token.','aichat-connect').'</div>';
         echo '</div>';
         echo '<div class="col-12 col-md-6">';
-        echo '<label class="form-label">Verify Token</label>';
+    echo '<label class="form-label">'.esc_html__('Verify Token','aichat-connect').'</label>';
     echo '<input type="text" name="aichat_connect_verify_token" class="form-control" value="'.esc_attr($verify_token).'" placeholder="mi-token-seguro" />';
-        echo '<div class="form-text">Debe coincidir con el configurado en Meta para validar el webhook (GET).</div>';
+    echo '<div class="form-text">'.esc_html__('Must match the one set in Meta to validate the webhook (GET).','aichat-connect').'</div>';
         echo '</div>';
         echo '<div class="col-12">';
-        echo '<button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar ajustes</button>';        
+    echo '<button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> '.esc_html__('Save settings','aichat-connect').'</button>';
         echo '</div>';
         echo '</form>';
         echo '</div></div></div>';
         // Info adicional (span full width row)
         echo '<div class="col-12">';
         echo '<div class="card shadow-sm">';
-        echo '<div class="card-header py-2"><strong><i class="bi bi-info-circle"></i> Notas</strong></div>';
+    echo '<div class="card-header py-2"><strong><i class="bi bi-info-circle"></i> '.esc_html__('Notes','aichat-connect').'</strong></div>';
         echo '<div class="card-body small">';
         echo '<ul class="mb-0 ps-3">';
-        echo '<li>Los mapeos definen qué bot responde por cada <strong>Phone Number ID</strong> (business). Gestiona eso en la pestaña <em>Mapeos</em>.</li>';
-        echo '<li>El contexto de sesión se genera como <code>wa_{md5(phone_del_usuario)}</code>.</li>';
-    echo '<li>Activa el modo debug definiendo <code>AICHAT_CONNECT_DEBUG</code> a true en el archivo principal para ver logs detallados.</li>';
-        echo '<li>Providers gestionan timeouts, fast ack y fallback. Revisa la pestaña Providers para afinar comportamiento.</li>';
+        echo '<li>'.esc_html__('Mappings define which bot responds for each Phone Number ID (business).','aichat-connect').'</li>';
+        echo '<li>'.esc_html__('Session context is generated as wa_{md5(user_phone)}.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Enable debug by defining AICHAT_CONNECT_DEBUG true in the main file to see detailed logs.','aichat-connect').'</li>';
+        echo '<li>'.esc_html__('Providers manage timeouts, fast ack and fallback. Adjust them in the Providers tab.','aichat-connect').'</li>';
         echo '</ul>';
         echo '</div></div></div>';
         echo '</div>'; // row
@@ -439,7 +442,7 @@ class AIChat_Connect_Admin {
     check_admin_referer('aichat_connect_delete_'.$id);
     $res = AIChat_Connect_Repository::instance()->delete_number($id);
         if (!$res){
-            wp_safe_redirect( admin_url('admin.php?page=aichat-connect&error='.rawurlencode('No se pudo eliminar')) );
+            wp_safe_redirect( admin_url('admin.php?page=aichat-connect&error='.rawurlencode(__('Could not delete','aichat-connect'))) );
         } else {
             wp_safe_redirect( admin_url('admin.php?page=aichat-connect&deleted=1') );
         }
@@ -459,11 +462,11 @@ class AIChat_Connect_Admin {
         echo '</div>';
 
         echo '<div class="card shadow-sm">';
-        echo '<div class="card-header py-2"><strong><i class="bi bi-list-ul"></i> Conversaciones (día + teléfono)</strong></div>';
+    echo '<div class="card-header py-2"><strong><i class="bi bi-list-ul"></i> '.esc_html__('Conversations (day + phone)','aichat-connect').'</strong></div>';
         echo '<div class="table-responsive">';
         echo '<table class="table table-sm table-striped table-hover align-middle mb-0">';
         echo '<thead class="table-light"><tr>';
-        echo '<th>Fecha</th><th>Teléfono</th><th>Entrantes</th><th>Salientes</th><th>Total</th><th>Último</th><th class="text-end">Acciones</th>';
+    echo '<th>'.esc_html__('Date','aichat-connect').'</th><th>'.esc_html__('Phone','aichat-connect').'</th><th>'.esc_html__('Incoming','aichat-connect').'</th><th>'.esc_html__('Outgoing','aichat-connect').'</th><th>'.esc_html__('Total','aichat-connect').'</th><th>'.esc_html__('Last','aichat-connect').'</th><th class="text-end">'.esc_html__('Actions','aichat-connect').'</th>';
         echo '</tr></thead><tbody>';
         if ($groups){
             foreach($groups as $g){
@@ -481,11 +484,11 @@ class AIChat_Connect_Admin {
                 echo '<td><span class="badge text-bg-success">'.(int)$g['out_count'].'</span></td>';
                 echo '<td><span class="badge text-bg-secondary">'.(int)$g['total'].'</span></td>';
                 echo '<td><small>'.esc_html($g['last_at']).'</small></td>';
-                echo '<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="'.esc_url($url).'"><i class="bi bi-eye"></i> Ver</a></td>';
+                echo '<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="'.esc_url($url).'"><i class="bi bi-eye"></i> '.esc_html__('View','aichat-connect').'</a></td>';
                 echo '</tr>';
             }
         } else {
-            echo '<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> Sin registros</td></tr>';
+            echo '<tr><td colspan="7" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> '.esc_html__('No records','aichat-connect').'</td></tr>';
         }
         echo '</tbody></table></div></div></div>';
     }
@@ -499,12 +502,12 @@ class AIChat_Connect_Admin {
 
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center gap-2 mb-4">';
-        echo '<h1 class="h3 m-0"><i class="bi bi-chat-text text-success"></i> Detalle conversación</h1>';
-    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-logs')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>';
+        echo '<h1 class="h3 m-0"><i class="bi bi-chat-text text-success"></i> '.esc_html__('Conversation detail','aichat-connect').'</h1>';
+    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-logs')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> '.esc_html__('Back','aichat-connect').'</a>';
         echo '</div>';
 
         if (!$ok){
-            echo '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Parámetros inválidos.</div></div>';
+            echo '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>'.esc_html__('Invalid parameters.','aichat-connect').'</div></div>';
             return;
         }
 
@@ -514,12 +517,12 @@ class AIChat_Connect_Admin {
         echo '<div class="card shadow-sm mb-4">';
         echo '<div class="card-header py-2 d-flex justify-content-between align-items-center">';
         echo '<div><strong><i class="bi bi-telephone"></i> '.esc_html($phone).'</strong> <span class="text-muted ms-2"><i class="bi bi-calendar-event"></i> '.esc_html($day).'</span></div>';
-        echo '<span class="badge text-bg-secondary">'.count($messages).' mensajes</span>';
+    echo '<span class="badge text-bg-secondary">'.sprintf(esc_html__('%d messages','aichat-connect'), count($messages)).'</span>';
         echo '</div>';
         echo '<div class="card-body aichat-wa-conversation">';
 
         if(!$messages){
-            echo '<p class="text-muted"><i class="bi bi-inbox"></i> Sin mensajes para este día.</p>';
+            echo '<p class="text-muted"><i class="bi bi-inbox"></i> '.esc_html__('No messages for this day.','aichat-connect').'</p>';
         } else {
             foreach($messages as $m){
                 // Siempre mostramos la parte del usuario si existe
@@ -527,7 +530,7 @@ class AIChat_Connect_Admin {
                     $user_text = $m['user_text'] ?? '';
                     echo '<div class="aichat-wa-msg aichat-wa-in">';
                     echo '<div class="aichat-wa-meta">';
-                    echo '<i class="bi bi-person me-1"></i>Usuario';
+                    echo '<i class="bi bi-person me-1"></i>'.esc_html__('User','aichat-connect');
                     echo ' · <span class="text-muted">'.esc_html($m['created_at']).'</span>';
                     if (!empty($m['bot_slug'])) {
                         echo ' · <span class="badge text-bg-light border">'.esc_html($m['bot_slug']).'</span>';
@@ -539,7 +542,7 @@ class AIChat_Connect_Admin {
                     if (!empty($m['bot_response'])) {
                         echo '<div class="aichat-wa-msg aichat-wa-out">';
                         echo '<div class="aichat-wa-meta">';
-                        echo '<i class="bi bi-robot me-1"></i>Bot';
+                        echo '<i class="bi bi-robot me-1"></i>'.esc_html__('Bot','aichat-connect');
                         echo ' · <span class="text-muted">'.esc_html($m['created_at']).'</span>';
                         if (!empty($m['bot_slug'])) {
                             echo ' · <span class="badge text-bg-light border">'.esc_html($m['bot_slug']).'</span>';
@@ -555,7 +558,7 @@ class AIChat_Connect_Admin {
                     $bot_resp = $m['bot_response'] ?? '';
                     echo '<div class="aichat-wa-msg aichat-wa-out">';
                     echo '<div class="aichat-wa-meta">';
-                    echo '<i class="bi bi-robot me-1"></i>Bot';
+                    echo '<i class="bi bi-robot me-1"></i>'.esc_html__('Bot','aichat-connect');
                     echo ' · <span class="text-muted">'.esc_html($m['created_at']).'</span>';
                     if (!empty($m['bot_slug'])) {
                         echo ' · <span class="badge text-bg-light border">'.esc_html($m['bot_slug']).'</span>';
