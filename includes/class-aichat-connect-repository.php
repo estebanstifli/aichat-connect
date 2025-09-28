@@ -189,4 +189,37 @@ class AIChat_Connect_Repository {
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_providers';
         return $wpdb->delete($t, ['id'=>(int)$id]) !== false;
     }
+
+    public function get_recent_messages_for_phone($phone, $limit_pairs = 12){
+        global $wpdb; $t = $wpdb->prefix . 'aichat_connect_messages';
+        $limit_pairs = max(1, min(50, (int)$limit_pairs));
+        // We fetch last 2*limit rows (approx) involving this phone ordered descending then rebuild pairs.
+        // direction='in' with user_text, and assistant response can be in same row (bot_response) or separate out rows.
+        // Strategy: pull last 200 rows (cap) then iterate oldest->newest building user/assistant turns.
+        $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM $t WHERE phone=%s ORDER BY id DESC LIMIT %d", $phone, max(100, $limit_pairs * 4)), ARRAY_A);
+        if (!$rows) return [];
+        $rows = array_reverse($rows);
+        $history = [];
+        foreach ($rows as $r){
+            if ($r['direction'] === 'in' && !empty($r['user_text'])) {
+                $turn = [ 'user' => $r['user_text'], 'assistant' => '' ];
+                if (!empty($r['bot_response'])) { $turn['assistant'] = $r['bot_response']; }
+                $history[] = $turn;
+            } elseif ($r['direction'] === 'out' && !empty($r['bot_response'])) {
+                // If last entry has user but no assistant yet, attach
+                $last = count($history) - 1;
+                if ($last >= 0 && $history[$last]['assistant'] === '') {
+                    $history[$last]['assistant'] = $r['bot_response'];
+                } else {
+                    // Orphan assistant (manual outbound) - treat as its own turn with empty user
+                    $history[] = [ 'user'=>'', 'assistant'=>$r['bot_response'] ];
+                }
+            }
+        }
+        // Keep only last N pairs
+        if (count($history) > $limit_pairs){
+            $history = array_slice($history, -1 * $limit_pairs);
+        }
+        return $history;
+    }
 }

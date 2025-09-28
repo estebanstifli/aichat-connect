@@ -86,7 +86,43 @@ class AIChat_Connect_Service {
     $timeout_ms = $provider_cfg ? (int)$provider_cfg['timeout_ms'] : 0;
     $deadline = $timeout_ms > 0 ? ($t_provider_start + ($timeout_ms / 1000.0)) : null;
 
-    if ($service === 'ai-engine' || $service === 'aiengine' || $service === 'ai_engine') {
+    if ($service === 'aipkit') {
+        $assistant = '';
+        $bot_id = is_numeric($bot_slug) ? (int)$bot_slug : $bot_slug;
+        $messages = [ [ 'role' => 'user', 'content' => $body_text ] ];
+        $api_key = '';
+        $hist_enabled = 1; $hist_limit = 12; $history_pairs = [];
+        if ($provider_cfg && !empty($provider_cfg['meta'])) {
+            $meta_dec = json_decode($provider_cfg['meta'], true);
+            if (is_array($meta_dec)) {
+                if (!empty($meta_dec['aipkit_api_key'])) { $api_key = $meta_dec['aipkit_api_key']; }
+                if (isset($meta_dec['aipkit_history_enabled'])) { $hist_enabled = (int)$meta_dec['aipkit_history_enabled']; }
+                if (isset($meta_dec['aipkit_history_limit'])) { $hist_limit = (int)$meta_dec['aipkit_history_limit']; }
+            }
+        }
+        if ($hist_limit < 1) { $hist_limit = 1; } elseif ($hist_limit > 50) { $hist_limit = 50; }
+        if ($hist_enabled === 1) {
+            $history_pairs = $this->repo->get_recent_messages_for_phone($phone, $hist_limit);
+            $built = [];
+            foreach ($history_pairs as $pair) {
+                if ($pair['user'] !== '') { $built[] = [ 'role' => 'user', 'content' => $pair['user'] ]; }
+                if ($pair['assistant'] !== '') { $built[] = [ 'role' => 'assistant', 'content' => $pair['assistant'] ]; }
+            }
+            $built[] = [ 'role' => 'user', 'content' => $body_text ];
+            $messages = $built;
+            aichat_connect_log_debug('AIPKit history included', [ 'pairs'=>count($history_pairs), 'messages_sent'=>count($messages) ]);
+        }
+        if (!class_exists('AIChat_Connect_Provider_AIPKit')) {
+            $file = plugin_dir_path(__FILE__) . 'class-aichat-connect-provider-aipkit.php';
+            if (file_exists($file)) { require_once $file; }
+        }
+        if (class_exists('AIChat_Connect_Provider_AIPKit')) {
+            $prov = AIChat_Connect_Provider_AIPKit::instance();
+            $result = $prov->chat($bot_id, $messages, $api_key, [ 'timeout' => ($timeout_ms>0? ceil($timeout_ms/1000):20), 'session_id'=>$session_id, 'phone'=>$phone ]);
+        } else {
+            $result = new WP_Error('aipkit_provider_missing','AIPKit provider file not loaded.');
+        }
+    } elseif ($service === 'ai-engine' || $service === 'aiengine' || $service === 'ai_engine') {
             // Preferimos la API PHP si el plugin está activo
             $assistant = '';
             $result = null;

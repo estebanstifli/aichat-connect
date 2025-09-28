@@ -101,6 +101,22 @@ class AIChat_Connect_Activator {
                 'meta' => null,
             ]);
         }
+        // Ensure AIPKit provider exists (added in later version); insert if missing.
+        $has_aipkit = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $providers WHERE provider_key=%s", 'aipkit'));
+        if ($has_aipkit === 0) {
+            $wpdb->insert($providers, [
+                'provider_key' => 'aipkit',
+                'name' => __('AIPKit','aichat-connect'),
+                'description' => __('AIPKit chatbot REST provider.','aichat-connect'),
+                'is_active' => 1,
+                'timeout_ms' => 20000,
+                'fast_ack_enabled' => 1,
+                'fast_ack_message' => __('Processing your message, one moment...','aichat-connect'),
+                'on_timeout_action' => 'fallback_message',
+                'fallback_message' => __('Sorry, I could not answer on time. Please try again.','aichat-connect'),
+                'meta' => null,
+            ]);
+        }
     }
 
     // Allow running dbDelta on upgrades without deactivate/activate

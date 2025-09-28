@@ -46,6 +46,7 @@ if ( ! function_exists( 'aichat_connect_log_debug' ) ) {
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-activator.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-api-client.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-service.php';
+require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-provider-aipkit.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-webhook.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-admin.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-admin-providers.php';

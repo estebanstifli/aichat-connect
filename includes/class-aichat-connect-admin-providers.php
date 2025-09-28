@@ -125,9 +125,38 @@ class AIChat_Connect_Admin_Providers {
             echo '<label class="form-label">'.esc_html__('Fallback Message','aichat-connect').'</label>';
             echo '<input type="text" class="form-control" name="fallback_message" value="'.esc_attr($row['fallback_message']).'" />';
             echo '</div>';
+            // Decode meta to prefill specialized fields (e.g., AIPKit API key)
+            $meta_arr = [];
+            if (!empty($row['meta'])) {
+                $tmp = json_decode($row['meta'], true);
+                if (is_array($tmp)) { $meta_arr = $tmp; }
+            }
+            $aipkit_api_key_val = isset($meta_arr['aipkit_api_key']) ? $meta_arr['aipkit_api_key'] : '';
+            $aipkit_hist_enabled = isset($meta_arr['aipkit_history_enabled']) ? (int)$meta_arr['aipkit_history_enabled'] : 1;
+            $aipkit_hist_limit = isset($meta_arr['aipkit_history_limit']) ? (int)$meta_arr['aipkit_history_limit'] : 12;
+            echo '<div class="col-12 col-md-6">';
+            echo '<label class="form-label">'.esc_html__('AIPKit API Key','aichat-connect').'</label>';
+            echo '<input type="text" class="form-control" name="aipkit_api_key" value="'.esc_attr($aipkit_api_key_val).'" placeholder="(optional)" />';
+            echo '<div class="form-text">'.esc_html__('Only if you enabled an API key in AIPKit. Will be stored inside the Meta JSON.','aichat-connect').'</div>';
+            echo '</div>';
+            // History toggle
+            echo '<div class="col-12 col-md-3">';
+            echo '<label class="form-label">'.esc_html__('Conversation Memory','aichat-connect').'</label>';
+            echo '<div class="form-check form-switch">';
+            echo '<input class="form-check-input" type="checkbox" value="1" name="aipkit_history_enabled" id="aipkit_hist_en" '.checked(1,$aipkit_hist_enabled,false).' />';
+            echo '<label class="form-check-label" for="aipkit_hist_en">'.esc_html__('Enabled','aichat-connect').'</label>';
+            echo '</div>';
+            echo '<div class="form-text">'.esc_html__('If enabled, previous messages are sent to AIPKit for context.','aichat-connect').'</div>';
+            echo '</div>';
+            echo '<div class="col-12 col-md-3">';
+            echo '<label class="form-label">'.esc_html__('History Limit','aichat-connect').'</label>';
+            echo '<input type="number" class="form-control" name="aipkit_history_limit" value="'.esc_attr($aipkit_hist_limit).'" min="1" max="50" />';
+            echo '<div class="form-text">'.esc_html__('Max previous exchanges (user+assistant pairs) to include.','aichat-connect').'</div>';
+            echo '</div>';
             echo '<div class="col-12">';
             echo '<label class="form-label">'.esc_html__('Meta (JSON)','aichat-connect').'</label>';
             echo '<textarea name="meta" rows="4" class="form-control" placeholder="{ }">'.esc_textarea(is_string($row['meta'])?$row['meta']:'').'</textarea>';
+            echo '<div class="form-text">'.esc_html__('You can edit manually. If you fill specialized fields they will be merged when saving.','aichat-connect').'</div>';
             echo '</div>';
             echo '<div class="col-12">';
             echo '<button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> '.esc_html__('Save changes','aichat-connect').'</button>';
@@ -147,6 +176,27 @@ class AIChat_Connect_Admin_Providers {
         $existing = AIChat_Connect_Repository::instance()->get_provider($id);
     if (!$existing){ wp_safe_redirect(admin_url('admin.php?page=aichat-connect-providers')); exit; }
         // Solo campos configurables
+        $raw_meta_input = wp_unslash($_POST['meta'] ?? $existing['meta']);
+        $decoded_meta = [];
+        if ($raw_meta_input) {
+            $tmp = json_decode($raw_meta_input, true);
+            if (is_array($tmp)) { $decoded_meta = $tmp; }
+        }
+        // Merge specialized fields
+        if (isset($_POST['aipkit_api_key']) && $_POST['aipkit_api_key'] !== '') {
+            $decoded_meta['aipkit_api_key'] = sanitize_text_field(wp_unslash($_POST['aipkit_api_key']));
+        } elseif (isset($decoded_meta['aipkit_api_key']) && $_POST['aipkit_api_key'] === '') {
+            // allow clearing
+            unset($decoded_meta['aipkit_api_key']);
+        }
+        // New: history settings
+        $decoded_meta['aipkit_history_enabled'] = isset($_POST['aipkit_history_enabled']) ? 1 : 0;
+        if (isset($_POST['aipkit_history_limit'])) {
+            $lim = (int)$_POST['aipkit_history_limit'];
+            if ($lim < 1) { $lim = 1; }
+            if ($lim > 50) { $lim = 50; }
+            $decoded_meta['aipkit_history_limit'] = $lim;            
+        }
         $data = [
             'id' => $id,
             'provider_key' => $existing['provider_key'],
@@ -158,7 +208,7 @@ class AIChat_Connect_Admin_Providers {
             'fast_ack_message' => sanitize_text_field($_POST['fast_ack_message'] ?? $existing['fast_ack_message']),
             'on_timeout_action' => sanitize_text_field($_POST['on_timeout_action'] ?? $existing['on_timeout_action']),
             'fallback_message' => sanitize_text_field($_POST['fallback_message'] ?? $existing['fallback_message']),
-            'meta' => wp_unslash($_POST['meta'] ?? $existing['meta']),
+            'meta' => $decoded_meta ? wp_json_encode($decoded_meta) : '',
         ];
         AIChat_Connect_Repository::instance()->upsert_provider($data);
     wp_safe_redirect( admin_url('admin.php?page=aichat-connect-providers&saved=1') );

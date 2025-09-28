@@ -419,6 +419,28 @@ class AIChat_Connect_Admin {
         if (in_array($service, ['ai-engine','aiengine','ai_engine'], true)){
             $bots = $this->get_ai_engine_bots();
             foreach ($bots as $b){ $items[] = ['value'=>$b['slug'], 'label'=>$b['name'].' ('.$b['slug'].')']; }
+        } elseif ($service === 'aipkit') {
+            // List AIPKit chatbots (CPT: aipkit_chatbot). 'bot_slug' mapping will store numeric ID.
+            if (class_exists('WP_Query')) {
+                $q = new WP_Query([
+                    'post_type' => 'aipkit_chatbot',
+                    'post_status' => ['publish','draft','private','pending','future'],
+                    'posts_per_page' => -1,
+                    'orderby' => 'title',
+                    'order' => 'ASC',
+                    'fields' => 'ids',
+                    'suppress_filters' => false,
+                ]);
+                if ($q && !is_wp_error($q) && !empty($q->posts)) {
+                    foreach ($q->posts as $pid) {
+                        $title = get_the_title($pid);
+                        $items[] = [
+                            'value' => (string)$pid,
+                            'label' => ($title ?: ('Chatbot '.$pid)).' ['.$pid.']'
+                        ];
+                    }
+                }
+            }
         } else {
             global $wpdb; $bots_t = $wpdb->prefix.'aichat_bots';
             $bots = $wpdb->get_results("SELECT slug, name FROM $bots_t WHERE is_active=1 ORDER BY name ASC", ARRAY_A);
