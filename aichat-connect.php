@@ -48,6 +48,8 @@ require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-api-client.php'
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-service.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-provider-aipkit.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-webhook.php';
+require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-channel-telegram.php';
+require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-webhook-telegram.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-admin.php';
 require_once AICHAT_CONNECT_DIR . 'includes/class-aichat-connect-admin-providers.php';
 
@@ -65,6 +67,7 @@ add_action('plugins_loaded', function(){
         });
     }
     AIChat_Connect_Webhook::instance();
+    AIChat_Connect_Webhook_Telegram::instance();
     AIChat_Connect_Admin::instance();
     AIChat_Connect_Admin_Providers::instance();
 });

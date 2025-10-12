@@ -353,7 +353,7 @@ class AIChat_Connect_Admin {
         if ( isset($_GET['updated']) ) {
             echo '<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>'.esc_html__('Settings saved','aichat-connect').'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
         }
-        echo '<div class="row g-4">';
+    echo '<div class="row g-4">';
         // Card Webhook Info
         echo '<div class="col-12 col-xl-6">';
         echo '<div class="card shadow-sm">';
@@ -395,7 +395,22 @@ class AIChat_Connect_Admin {
         echo '</div>';
         echo '</form>';
         echo '</div></div></div>';
-        // Info adicional (span full width row)
+    // Telegram basic info card
+    echo '<div class="col-12 col-xl-6">';
+    echo '<div class="card shadow-sm">';
+    echo '<div class="card-header py-2"><strong><i class="bi bi-telegram"></i> Telegram</strong></div>';
+    echo '<div class="card-body small">';
+    $webhook_tg = esc_url( site_url('/wp-json/aichat-tg/v1/webhook/{mapping_id}') );
+    echo '<p>'.esc_html__('Webhook URL pattern (replace {mapping_id} with your mapping row id):','aichat-connect').'</p>';
+    echo '<div class="mb-2"><code style="user-select:all">'.esc_html($webhook_tg).'</code></div>';
+    echo '<ul class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('Set your bot webhook with Telegram using the full URL including the mapping id.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Example: https://your.site/wp-json/aichat-tg/v1/webhook/12','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Ensure the mapping “Specific Access Token” holds your Telegram bot token.','aichat-connect').'</li>';
+    echo '</ul>';
+    echo '</div></div></div>';
+
+    // Info adicional (span full width row)
         echo '<div class="col-12">';
         echo '<div class="card shadow-sm">';
     echo '<div class="card-header py-2"><strong><i class="bi bi-info-circle"></i> '.esc_html__('Notes','aichat-connect').'</strong></div>';
