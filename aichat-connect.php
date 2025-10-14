@@ -63,7 +63,7 @@ add_action('plugins_loaded', function(){
     $core_active = function_exists('aichat_generate_bot_response');
     if ( ! $core_active ) {
         add_action('admin_notices', function(){
-            echo '<div class="notice notice-error"><p>'.esc_html__('AI Chat Connect: the core AI Chat plugin is not active. Mappings using service "AI Chat" will fail, but "AI Engine" mappings will still attempt to respond.','aichat-connect').'</p></div>';
+            echo '<div class="notice notice-error"><p>'.esc_html__('AI Chat Connect: the Axiachat AI plugin is not active. Mappings using service "Axiachat AI" will fail, but "AI Engine" mappings will still attempt to respond.','aichat-connect').'</p></div>';
         });
     }
     AIChat_Connect_Webhook::instance();

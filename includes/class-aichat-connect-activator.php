@@ -17,15 +17,18 @@ class AIChat_Connect_Activator {
         $sql_numbers = "CREATE TABLE $numbers (
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             phone VARCHAR(64) NOT NULL COMMENT 'Phone Number ID de Meta',
+            channel VARCHAR(32) NOT NULL DEFAULT 'whatsapp',
             bot_slug VARCHAR(100) NOT NULL,
             service VARCHAR(50) NOT NULL DEFAULT 'aichat',
             display_name VARCHAR(100) NULL,
             access_token LONGTEXT NULL,
+            verify_token VARCHAR(64) NULL,
             is_active TINYINT(1) NOT NULL DEFAULT 1,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP NULL DEFAULT NULL,
             PRIMARY KEY (id),
             UNIQUE KEY phone (phone),
+            KEY channel (channel),
             KEY bot_slug (bot_slug),
             KEY service (service)
         ) $charset";
@@ -35,6 +38,8 @@ class AIChat_Connect_Activator {
             id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             wa_message_id VARCHAR(100) NOT NULL,
             phone VARCHAR(32) NOT NULL,
+            channel VARCHAR(32) NOT NULL DEFAULT 'whatsapp',
+            external_id VARCHAR(100) NULL,
             direction ENUM('in','out') NOT NULL,
             bot_slug VARCHAR(100) NULL,
             session_id VARCHAR(64) NULL,
@@ -46,6 +51,8 @@ class AIChat_Connect_Activator {
             PRIMARY KEY (id),
             UNIQUE KEY wa_message_id (wa_message_id),
             KEY phone (phone),
+            KEY channel (channel),
+            KEY external_id (external_id),
             KEY bot_slug (bot_slug)
         ) $charset";
 
@@ -78,8 +85,8 @@ class AIChat_Connect_Activator {
         if ($exists === 0) {
             $wpdb->insert($providers, [
                 'provider_key' => 'aichat',
-                'name' => __('AI Chat Core','aichat-connect'),
-                'description' => __('Internal provider (AI Chat plugin).','aichat-connect'),
+                'name' => __('Axiachat AI','aichat-connect'),
+                'description' => __('Internal provider (Axiachat AI plugin).','aichat-connect'),
                 'is_active' => 1,
                 'timeout_ms' => 15000,
                 'fast_ack_enabled' => 0,
@@ -101,6 +108,14 @@ class AIChat_Connect_Activator {
                 'meta' => null,
             ]);
         }
+        // Rename provider label/description if previously created with old name
+        $wpdb->update($providers,
+            [
+                'name' => __('Axiachat AI','aichat-connect'),
+                'description' => __('Internal provider (Axiachat AI plugin).','aichat-connect')
+            ],
+            [ 'provider_key' => 'aichat' ]
+        );
         // Ensure AIPKit provider exists (added in later version); insert if missing.
         $has_aipkit = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $providers WHERE provider_key=%s", 'aipkit'));
         if ($has_aipkit === 0) {

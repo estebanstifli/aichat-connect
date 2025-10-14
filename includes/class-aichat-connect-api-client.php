@@ -64,7 +64,7 @@ class AIChat_Connect_API_Client {
                     // Block further attempts for 2 minutes to reduce log noise
                     set_transient('aichat_connect_token_block', 1, 2 * MINUTE_IN_SECONDS);
                     aichat_connect_log_debug('Graph token expired/invalid', [ 'phone'=>$phone, 'http_code'=>$code, 'gcode'=>$gcode, 'gsub'=>$gsub ]);
-                    return new WP_Error('wa_token_expired', 'El token de WhatsApp ha expirado o es inválido (code 190)', [ 'error' => $graph_error, 'http_code' => $code ]);
+                    return new WP_Error('wa_token_expired', __('WhatsApp token has expired or is invalid (code 190)','aichat-connect'), [ 'error' => $graph_error, 'http_code' => $code ]);
                 }
             }
             aichat_connect_log_debug('Graph HTTP error', [ 'phone'=>$phone, 'http_code'=>$code ]);

@@ -1,6 +1,6 @@
 # AI Chat Connect Addon (WhatsApp)
 
-Integración de WhatsApp (Meta Cloud API) para el plugin AI Chat. Este addon enruta mensajes entrantes a un bot configurado y responde automáticamente.
+Integración de WhatsApp (Meta Cloud API) para el plugin Axiachat AI. Este addon enruta mensajes entrantes a un bot configurado y responde automáticamente.
 
 ## Estado
 Version 0.1.0 (alpha) – Solo texto entrante/saliente.
@@ -14,7 +14,7 @@ Version 0.1.0 (alpha) – Solo texto entrante/saliente.
 2. Se valida el verify token (solo en GET inicial)
 3. Se extrae el primer mensaje text
 4. Se localiza bot por telefono
-5. Se llama a `aichat_generate_bot_response()` (core)
+5. Se llama a `aichat_generate_bot_response()` (core Axiachat AI)
 6. Se guarda log local + se envía la respuesta por la API de WhatsApp
 
 ## Configuración
@@ -38,7 +38,7 @@ En el menú "AI Chat Connect" (slugs admin `aichat-connect*`):
 
 <!-- Sección de migración eliminada: ya migrado en tu instalación -->
 ## Desarrollo
-Requiere el plugin principal AI Chat para usar el servicio `aichat`. El proveedor `ai-engine` funciona si el plugin AI Engine está activo.
+Requiere el plugin principal Axiachat AI para usar el servicio `aichat`. El proveedor `ai-engine` funciona si el plugin AI Engine está activo.
 
 ## AIPKit Provider (New)
 Use the chatbot module of the "GPT3 AI Content Generator" plugin (AIPKit). New endpoint format: `POST /wp-json/aipkit/v1/chat/{bot_id}/message` with `Authorization: Bearer <API_KEY>`. Legacy fallback (`POST /wp-json/aipkit/v1/chat` + body bot_id + aipkit_api_key) is still attempted automatically if the new path returns 404/400.

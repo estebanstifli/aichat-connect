@@ -24,7 +24,7 @@ class AIChat_Connect_Webhook {
     }
 
     public function handle_verify($request){
-    $verify_token = get_option('aichat_connect_verify_token','');
+        // Verificación: aceptamos si el token proporcionado coincide con cualquier verify_token de un mapeo activo (canal=whatsapp).
         // Meta usa normalmente hub.mode y hub.verify_token (con puntos). WP los normaliza a guiones bajos en get_param?
         // Revisamos ambas variantes por compatibilidad.
         $mode = $request->get_param('hub.mode');
@@ -33,13 +33,18 @@ class AIChat_Connect_Webhook {
         if ($token === null) { $token = $request->get_param('hub_verify_token'); }
         $challenge = $request->get_param('hub.challenge');
         if ($challenge === null) { $challenge = $request->get_param('hub_challenge'); }
-    aichat_connect_log_debug('Webhook verify request', [
+        aichat_connect_log_debug('Webhook verify request', [
             'mode' => $mode,
             'provided_token' => $token,
-            'expected_token' => $verify_token ? '***set***' : '***empty***',
             'has_challenge' => $challenge !== null,
         ]);
-        if ($mode === 'subscribe' && $token && hash_equals($verify_token, $token)){
+        $match = false;
+        if ($mode === 'subscribe' && $token){
+            global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
+            $cnt = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $t WHERE is_active=1 AND (channel='whatsapp' OR channel IS NULL) AND verify_token=%s", $token));
+            $match = $cnt > 0;
+        }
+        if ($match){
             aichat_connect_log_debug('Webhook verify success');
             // Responder exactamente el challenge sin envolturas ni título (compatible con ejemplo oficial Meta).
             nocache_headers();

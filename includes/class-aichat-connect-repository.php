@@ -15,6 +15,12 @@ class AIChat_Connect_Repository {
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $t WHERE phone=%s AND is_active=1", $phone), ARRAY_A);
     }
 
+    public function get_mapping_by_channel_and_phone($channel, $phone){
+    global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
+        $channel = $channel ?: 'whatsapp';
+        return $wpdb->get_row($wpdb->prepare("SELECT * FROM $t WHERE channel=%s AND phone=%s AND is_active=1", $channel, $phone), ARRAY_A);
+    }
+
     /**
      * Resolución simplificada - solo phone_number_id exacto de Meta:
      * 1. Business phone_number_id mapping (valor directo del webhook)
@@ -79,8 +85,9 @@ class AIChat_Connect_Repository {
 
     public function upsert_number($data){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
-    $allowed = [ 'phone','bot_slug','service','display_name','access_token','is_active' ];
+    $allowed = [ 'phone','channel','bot_slug','service','display_name','access_token','is_active' ];
         $row = array_intersect_key($data, array_flip($allowed));
+        if (empty($row['channel'])) { $row['channel'] = 'whatsapp'; }
         $row['updated_at'] = current_time('mysql');
         if (!empty($data['id'])){
             $wpdb->update($t, $row, ['id'=>(int)$data['id']]);
@@ -107,15 +114,16 @@ class AIChat_Connect_Repository {
                 aichat_connect_log_debug('Repo credentials business match', [ 'business_id'=>$business_id, 'has_custom_token'=> empty($row['access_token'])?0:1 ]);
                 return [
                     'phone_id' => $row['phone'], // El campo phone contiene el phone_number_id de Meta
-                    'access_token' => $row['access_token'] ?: get_option('aichat_connect_access_token',''),
+                    'access_token' => $row['access_token'],
                 ];
             }
         }
-        // Usar configuración global como fallback
-    aichat_connect_log_debug('Repo credentials global fallback');
+        // Fallback: primer mapeo activo de WhatsApp (canal por defecto)
+        $row = $wpdb->get_row("SELECT phone, access_token FROM $t WHERE is_active=1 AND (channel='whatsapp' OR channel IS NULL) ORDER BY id ASC LIMIT 1", ARRAY_A);
+        aichat_connect_log_debug('Repo credentials fallback first mapping', [ 'found' => $row ? 1:0 ]);
         return [
-            'phone_id' => get_option('aichat_connect_default_phone_id',''),
-            'access_token' => get_option('aichat_connect_access_token',''),
+            'phone_id' => $row['phone'] ?? '',
+            'access_token' => $row['access_token'] ?? '',
         ];
     }
 

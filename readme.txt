@@ -10,10 +10,10 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: aichat-connect
 Domain Path: /languages
 
-AI Chat Connect integrates the WhatsApp (Meta Cloud API) channel with the existing AI Chat (core) plugin or alternative AI providers (AI Engine) so incoming WhatsApp messages are automatically answered by mapped bots.
+AI Chat Connect integrates the WhatsApp (Meta Cloud API) channel with the existing Axiachat AI (core) plugin or alternative AI providers (AI Engine) so incoming WhatsApp messages are automatically answered by mapped bots.
 
 == Description ==
-AI Chat Connect is an addon that receives incoming WhatsApp messages (via Meta Cloud API Webhook) and routes them to a selected bot provider. Each Business Phone Number ID (phone_number_id) can be mapped to an AI Chat bot or an alternative provider (currently AI Engine). The reply is sent back over the WhatsApp Cloud API and all interactions are logged.
+AI Chat Connect is an addon that receives incoming WhatsApp messages (via Meta Cloud API Webhook) and routes them to a selected bot provider. Each Business Phone Number ID (phone_number_id) can be mapped to an Axiachat AI bot or an alternative provider (currently AI Engine). The reply is sent back over the WhatsApp Cloud API and all interactions are logged.
 
 Key architectural layers (all singletons):
 1. Webhook (REST): Validates GET challenge, parses first text message from incoming payload.
@@ -24,7 +24,7 @@ Key architectural layers (all singletons):
 6. Activator: Creates / upgrades 3 custom tables.
 
 Features:
-* Map each Business Phone Number ID to a bot slug and provider (AI Chat core or AI Engine).
+* Map each Business Phone Number ID to a bot slug and provider (Axiachat AI core or AI Engine).
 * Per-provider behavior: timeout (ms), fast acknowledgement text, fallback strategy.
 * Fast ACK: send an immediate short response while the real provider call completes.
 * Unified message logging (in + out) with optional compact row (inbound + bot response).
@@ -47,15 +47,15 @@ Disclaimer: This plugin is not affiliated with or endorsed by Meta. You must com
 == Installation ==
 1. Upload the plugin folder `aichat-whatsapp` to `/wp-content/plugins/` or install via ZIP upload.
 2. Activate plugin through the WordPress "Plugins" menu.
-3. Go to: AI Chat Connect → Settings.
+3. Go to: AI Chat Connect → Mappings.
 4. Copy the Webhook URL shown and configure it in your Meta App (WhatsApp Cloud API) with the same Verify Token you set in the plugin.
 5. In "Mappings" add at least one Phone ID → Bot mapping (or rely on global bot fallback if set in AI Chat core).
 6. (Optional) Tune provider behavior under "Providers".
 7. Send a WhatsApp message to your connected number to test. Check Logs.
 
 == Frequently Asked Questions ==
-= Do I need the AI Chat core plugin? =
-It is recommended. If absent, mappings using provider "AI Chat" will fail, but AI Engine provider mappings can still function.
+= Do I need the Axiachat AI core plugin? =
+It is recommended. If absent, mappings using provider "Axiachat AI" will fail, but AI Engine provider mappings can still function.
 
 = How do I find my Business Phone Number ID? =
 In Meta Developers → WhatsApp → API Setup you will see the phone_number_id. Use that exact numeric ID in the mapping.

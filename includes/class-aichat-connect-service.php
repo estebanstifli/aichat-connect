@@ -277,7 +277,7 @@ class AIChat_Connect_Service {
             $bot_slug = $this->repo->get_bot_for_phone($phone);
         }
         if (!$bot_slug){
-            return new WP_Error('no_bot','No hay mapping para el teléfono');
+            return new WP_Error('no_bot', __('No mapping for this phone','aichat-connect'));
         }
         $session_id = $this->ensure_session_id($phone);
     $creds = $this->repo->resolve_credentials(null, $phone);

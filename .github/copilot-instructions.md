@@ -3,14 +3,14 @@
 Concise reference for AI agents contributing to this WordPress addon. Focus on real, current patterns (do not document roadmap features as implemented).
 
 ## Core Purpose
-Receive WhatsApp (Meta Cloud API) text messages and answer using a mapped bot from either the AI Chat core plugin (`aichat_generate_bot_response`) or alternative provider (AI Engine). Admin UI manages phone → bot/provider mappings, provider behavior (timeouts / fast ack), and logs.
+Receive WhatsApp (Meta Cloud API) text messages and answer using a mapped bot from either the Axiachat AI core plugin (`aichat_generate_bot_response`) or alternative provider (AI Engine). Admin UI manages phone → bot/provider mappings, provider behavior (timeouts / fast ack), and logs.
 
 ## Layered Architecture (All Singletons)
 1. Webhook (`AIChat_Connect_Webhook`): Registers REST route, verifies GET token, extracts first text message from payload.
 2. Service (`AIChat_Connect_Service`): Orchestrates bot resolution, provider call, timeout / fast ack logic, logging, outbound send.
 3. Repository (`AIChat_Connect_Repository`): DB CRUD for numbers, providers, messages; bot + credential resolution.
 4. API Client (`AIChat_Connect_API_Client`): Low-level Graph API POST /messages with token expiry detection + transient backoff.
-5. Admin (`AIChat_Connect_Admin`, `AIChat_Connect_Admin_Providers`): Menus (Mapeos, Settings, Logs, Providers), Bootstrap assets, forms.
+5. Admin (`AIChat_Connect_Admin`, `AIChat_Connect_Admin_Providers`): Menus (Mappings, Logs, Providers), Bootstrap assets, forms.
 6. Activator (`AIChat_Connect_Activator`): Creates three tables (numbers, messages, providers) via `dbDelta` on activate / upgrade.
 
 ## Database Tables

@@ -29,7 +29,6 @@ class AIChat_Connect_Admin {
         $page = $_GET['page'] ?? '';
         return in_array($page, [
             'aichat-connect',            // Mapeos
-            'aichat-connect-settings',   // Settings / Config
             'aichat-connect-logs',
             'aichat-connect-logs-detail',
             'aichat-connect-providers'
@@ -103,15 +102,6 @@ class AIChat_Connect_Admin {
             'aichat-connect',
             [$this,'render_mappings']
         );
-        // Submenú Settings con configuración + guía
-        add_submenu_page(
-            'aichat-connect',
-            __('AI Chat Connect - Settings','aichat-connect'),
-            __('Settings','aichat-connect'),
-            'manage_options',
-            'aichat-connect-settings',
-            [$this,'render_settings']
-        );
         // Logs
         add_submenu_page(
             'aichat-connect',
@@ -134,33 +124,7 @@ class AIChat_Connect_Admin {
     }
 
     public function register_settings(){
-        register_setting(
-            'aichat_connect',
-            'aichat_connect_access_token',
-            [
-                'type'              => 'string',
-                'sanitize_callback' => [ __CLASS__, 'sanitize_access_token' ],
-                'show_in_rest'      => false,
-            ]
-        );
-        register_setting(
-            'aichat_connect',
-            'aichat_connect_default_phone_id',
-            [
-                'type'              => 'string',
-                'sanitize_callback' => [ __CLASS__, 'sanitize_phone_id' ],
-                'show_in_rest'      => false,
-            ]
-        );
-        register_setting(
-            'aichat_connect',
-            'aichat_connect_verify_token',
-            [
-                'type'              => 'string',
-                'sanitize_callback' => [ __CLASS__, 'sanitize_verify_token' ],
-                'show_in_rest'      => false,
-            ]
-        );
+        // Global settings removed: tokens and verify token are now per mapping.
     }
 
     /* ================= Sanitization Callbacks (PluginCheck) ================= */
@@ -199,7 +163,6 @@ class AIChat_Connect_Admin {
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center mb-4 gap-2">';
         echo '<h1 class="h3 m-0"><i class="bi bi-diagram-3 text-success"></i> '.esc_html__('Phone ID → Bot Mappings','aichat-connect').'</h1>';
-    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-settings')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> '.esc_html__('Settings','aichat-connect').'</a>';
         echo '</div>';
 
         // Mensajes de estado
@@ -216,7 +179,7 @@ class AIChat_Connect_Admin {
         echo '<div class="table-responsive">';
         echo '<table class="table table-sm table-striped table-hover align-middle mb-0">';
         echo '<thead class="table-light"><tr>';
-    echo '<th>'.esc_html__('Phone ID','aichat-connect').'</th><th>'.esc_html__('Bot','aichat-connect').'</th><th>'.esc_html__('Display','aichat-connect').'</th><th>'.esc_html__('Active','aichat-connect').'</th><th>'.esc_html__('Specific Token','aichat-connect').'</th><th class="text-end">'.esc_html__('Actions','aichat-connect').'</th>';
+    echo '<th>'.esc_html__('Channel','aichat-connect').'</th><th>'.esc_html__('Endpoint ID','aichat-connect').'</th><th>'.esc_html__('Bot','aichat-connect').'</th><th>'.esc_html__('Display','aichat-connect').'</th><th>'.esc_html__('Active','aichat-connect').'</th><th>'.esc_html__('Specific Token','aichat-connect').'</th><th class="text-end">'.esc_html__('Actions','aichat-connect').'</th>';
         echo '</tr></thead><tbody>';
         if ($numbers){
             foreach($numbers as $n){
@@ -228,12 +191,14 @@ class AIChat_Connect_Admin {
                     admin_url('admin-post.php?action=aichat_connect_delete_number&id='.(int)$n['id']),
                     'aichat_connect_delete_'.$n['id']
                 );
+                $chan = isset($n['channel']) ? $n['channel'] : 'whatsapp';
                 echo '<tr>';
+                echo '<td><span class="badge text-bg-light border">'.esc_html($chan).'</span></td>';
                 echo '<td><code>'.esc_html($n['phone']).'</code></td>';
                 echo '<td><span class="badge text-bg-secondary">'.esc_html($n['bot_slug']).'</span></td>';
                 echo '<td>'.esc_html($n['display_name']).'</td>';
                 echo '<td>'.($n['is_active'] ? '<span class="badge text-bg-success">'.esc_html__('Yes','aichat-connect').'</span>' : '<span class="badge text-bg-danger">'.esc_html__('No','aichat-connect').'</span>').'</td>';
-                echo '<td>'.($n['access_token']? '<i class="bi bi-key-fill text-warning" title="Tiene token"></i>' : '<span class="text-muted">—</span>').'</td>';
+                echo '<td>'.($n['access_token']? '<i class="bi bi-key-fill text-warning" title="'.esc_attr__('Has token','aichat-connect').'"></i>' : '<span class="text-muted">—</span>').'</td>';
                 echo '<td class="text-end">';
                 echo '<a class="btn btn-sm btn-outline-primary me-1" href="'.esc_url($edit_url).'"><i class="bi bi-pencil-square"></i></a>';
                 echo '<a class="btn btn-sm btn-outline-danger" href="'.esc_url($del_url).'" onclick="return confirm(\''.esc_js(__('Delete mapping?','aichat-connect')).'\')"><i class="bi bi-trash"></i></a>';
@@ -252,6 +217,7 @@ class AIChat_Connect_Admin {
         }
         $defaults = [
             'phone' => '',
+            'channel' => 'whatsapp',
             'service' => 'aichat',
             'bot_slug' => get_option('aichat_global_bot_slug',''),
             'display_name' => '',
@@ -270,7 +236,7 @@ class AIChat_Connect_Admin {
         }
     $providers_active = AIChat_Connect_Repository::instance()->list_providers(true);
 
-        echo '<div class="card shadow-sm mb-5" id="aichat-wa-form">';
+    echo '<div class="card shadow-sm mb-5" id="aichat-wa-form">';
     echo '<div class="card-header py-2"><strong>'.( $editing
         ? '<i class="bi bi-pencil-square"></i> '.esc_html__('Edit mapping','aichat-connect')
         : '<i class="bi bi-plus-circle"></i> '.esc_html__('Add mapping','aichat-connect')
@@ -281,9 +247,21 @@ class AIChat_Connect_Admin {
         if ($editing){ echo '<input type="hidden" name="id" value="'.(int)$row['id'].'">'; }
     wp_nonce_field('aichat_connect_save_number');
 
+        echo '<div class="col-md-3">';
+        echo '<label class="form-label">'.esc_html__('Channel','aichat-connect').'</label>';
+        echo '<select name="channel" id="aichat-wa-channel" class="form-select">';
+        $channels = [ 'whatsapp'=>'WhatsApp', 'telegram'=>'Telegram' /*, 'messenger'=>'Messenger', 'twilio_sms'=>'Twilio SMS'*/ ];
+        foreach ($channels as $ck=>$clbl){ echo '<option value="'.esc_attr($ck).'"'.selected($row['channel'],$ck,false).'>'.esc_html($clbl).'</option>'; }
+        echo '</select>';
+        echo '</div>';
+
         echo '<div class="col-md-4">';
-    echo '<label class="form-label">'.esc_html__('Phone ID (Meta)','aichat-connect').' <span class="text-danger">*</span></label>';
-        echo '<input type="text" class="form-control" name="phone" value="'.esc_attr($row['phone']).'" required placeholder="123456789012345">';
+        echo '<label class="form-label">'.esc_html__('Endpoint ID','aichat-connect').' <span class="text-danger">*</span></label>';
+        $ph_ph = $row['channel']==='whatsapp' ? '123456789012345 (phone_number_id)' : ($row['channel']==='telegram' ? 'telegram-bot (free text)' : 'endpoint id');
+        echo '<input type="text" class="form-control" name="phone" value="'.esc_attr($row['phone']).'" required placeholder="'.esc_attr($ph_ph).'">';
+        echo '<div class="form-text">';
+        echo ($row['channel']==='whatsapp' ? esc_html__('Use your Business Phone Number ID (Meta Cloud API).','aichat-connect') : esc_html__('Free label for your Telegram bot; token goes below.','aichat-connect'));
+        echo '</div>';
         echo '</div>';
 
         echo '<div class="col-md-3">';
@@ -316,10 +294,29 @@ class AIChat_Connect_Admin {
         echo '<input type="text" class="form-control" name="display_name" value="'.esc_attr($row['display_name']).'">';
         echo '</div>';
 
-        echo '<div class="col-md-8">';
-    echo '<label class="form-label">'.esc_html__('Specific Access Token','aichat-connect').'</label>';
-    echo '<input type="text" class="form-control" name="access_token" value="'.esc_attr($row['access_token']).'" placeholder="'.esc_attr__('Leave empty to use global','aichat-connect').'">';
+    echo '<div class="col-md-8">';
+        echo '<label class="form-label">'.esc_html__('Specific Access Token','aichat-connect').'</label>';
+        $tok_ph = $row['channel']==='whatsapp' ? 'EAAG...' : ($row['channel']==='telegram' ? 'Telegram Bot Token (e.g. 123456:ABC...)' : 'Token');
+        echo '<div class="input-group">';
+        echo '<input type="text" class="form-control" name="access_token" value="'.esc_attr($row['access_token']).'" placeholder="'.esc_attr($tok_ph).'">';
+    echo '<button class="btn btn-outline-secondary" type="button" id="aichat-toggle-token-visibility"><i class="bi bi-eye"></i> '.esc_html__('Show/Hide','aichat-connect').'</button>';
+    echo '<button class="btn btn-outline-secondary" type="button" data-copy-input-name="access_token"><i class="bi bi-clipboard"></i> '.esc_html__('Copy','aichat-connect').'</button>';
         echo '</div>';
+        echo '<div class="form-text">';
+    echo ($row['channel']==='whatsapp' ? esc_html__('Graph access token for this WhatsApp mapping.','aichat-connect') : esc_html__('Required: Telegram Bot Token for this mapping.','aichat-connect'));
+        echo '</div>';
+        echo '</div>';
+
+    // WhatsApp Verify Token (per mapping)
+    echo '<div class="col-md-4" data-channel-only="whatsapp">';
+    echo '<label class="form-label">'.esc_html__('Verify Token (Webhook)','aichat-connect').'</label>';
+    echo '<div class="input-group">';
+    echo '<input type="text" class="form-control" name="verify_token" value="'.esc_attr($row['verify_token'] ?? '').'" placeholder="my-verify-token" />';
+    echo '<button class="btn btn-outline-secondary" type="button" id="aichat-generate-verify-token"><i class="bi bi-magic"></i> '.esc_html__('Generate','aichat-connect').'</button>';
+    echo '<button class="btn btn-outline-secondary" type="button" data-copy-input-name="verify_token"><i class="bi bi-clipboard"></i> '.esc_html__('Copy','aichat-connect').'</button>';
+    echo '</div>';
+    echo '<div class="form-text">'.esc_html__('Used to validate the WhatsApp webhook (GET verification).','aichat-connect').'</div>';
+    echo '</div>';
 
         echo '<div class="col-md-2 d-flex align-items-end">';
         echo '<div class="form-check">';
@@ -331,100 +328,136 @@ class AIChat_Connect_Admin {
         echo '<div class="col-12">';
     submit_button($editing? __('Save changes','aichat-connect'):__('Add mapping','aichat-connect'),'primary','submit',false,['class'=>'btn btn-primary']);
         echo '</div>';
-
+        
         echo '</form>';
-        echo '</div></div>';
+    // Per-channel user guides
+    echo '<div class="px-3 pb-3 mt-3">';
+    // WhatsApp guide (beginner-friendly, step-by-step) — EN
+    $wa_webhook = esc_url( site_url('/wp-json/aichat-wa/v1/webhook') );
+    echo '<div class="alert alert-info" data-channel-only="whatsapp" style="display:none">';
+    echo '<div class="fw-semibold mb-2"><i class="bi bi-whatsapp text-success me-1"></i>'.esc_html__('Guide to connect WhatsApp with your WordPress plugin','aichat-connect').'</div>';
 
-        echo '</div>'; // wrap
-    }
+    // Webhook URL quick reference
+    echo '<div class="mb-3">'.esc_html__('Use this URL as the Callback URL in your Meta App (WhatsApp Cloud API):','aichat-connect').' <code id="aichat-wa-webhook" class="text-primary" style="user-select:all">'.$wa_webhook.'</code> <button type="button" class="btn btn-outline-secondary btn-sm ms-2" data-copy-target-id="aichat-wa-webhook"><i class="bi bi-clipboard"></i> '.esc_html__('Copy','aichat-connect').'</button></div>';
 
-    // Nueva página de Settings: tokens, webhook y guía.
-    public function render_settings(){
-        if (!current_user_can('manage_options')) return;
-        $webhook = esc_url( site_url('/wp-json/aichat-wa/v1/webhook') );
-    $access_token = get_option('aichat_connect_access_token','');
-    $default_phone = get_option('aichat_connect_default_phone_id','');
-    $verify_token = get_option('aichat_connect_verify_token','');
-        echo '<div class="wrap aichat-wa-wrap container-fluid">';
-        echo '<div class="d-flex align-items-center mb-4 gap-2">';
-        echo '<h1 class="h3 m-0"><i class="bi bi-gear-wide-connected text-success"></i> '.esc_html__('WhatsApp Configuration','aichat-connect').'</h1>';
-    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-diagram-3"></i> '.esc_html__('Mappings','aichat-connect').'</a>';
-        echo '</div>';
-        if ( isset($_GET['updated']) ) {
-            echo '<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>'.esc_html__('Settings saved','aichat-connect').'<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
-        }
-    echo '<div class="row g-4">';
-        // Card Webhook Info
-        echo '<div class="col-12 col-xl-6">';
-        echo '<div class="card shadow-sm">';
-        echo '<div class="card-header py-2"><strong><i class="bi bi-link-45deg"></i> Webhook Meta</strong></div>';
-        echo '<div class="card-body small">';
-    echo '<p>'.esc_html__('Use this URL in your Meta App (WhatsApp Cloud API) configuration:','aichat-connect').'</p>';
-    echo '<div class="mb-2"><code style="user-select:all">'.esc_html($webhook).'</code></div>';
-        echo '<ul class="mb-3 ps-3">';
-    echo '<li>'.esc_html__('Method: GET (verification) and POST (messages)','aichat-connect').'</li>';
-    echo '<li>'.esc_html__('Set the Verify Token exactly as configured below.','aichat-connect').'</li>';
-    echo '<li>'.esc_html__('Subscribe to the messages field of the whatsapp_business_account object.','aichat-connect').'</li>';
-        echo '</ul>';
-    echo '<p class="text-muted">'.esc_html__('Quick guide: 1) Create App in developers.facebook.com 2) Add WhatsApp product 3) Generate System User / Token 4) Configure Webhook with URL + Verify Token 5) Subscribe events 6) Add your number/test.','aichat-connect').'</p>';
-        echo '</div></div></div>';
-        // Card Settings Form
-        echo '<div class="col-12 col-xl-6">';
-        echo '<div class="card shadow-sm">';
-    echo '<div class="card-header py-2"><strong><i class="bi bi-sliders"></i> '.esc_html__('Credentials & Settings','aichat-connect').'</strong></div>';
-        echo '<div class="card-body">';
-        echo '<form method="post" action="options.php" class="row g-3">';
-    settings_fields('aichat_connect');
-        echo '<div class="col-12">';
-    echo '<label class="form-label">'.esc_html__('Access Token (Graph API)','aichat-connect').' <span class="text-danger">*</span></label>';
-    echo '<input type="text" name="aichat_connect_access_token" class="form-control" value="'.esc_attr($access_token).'" placeholder="EAAG..." />';
-    echo '<div class="form-text">'.esc_html__('Access token with WhatsApp Business permissions (recommended: long-lived system user).','aichat-connect').'</div>';
-        echo '</div>';
-        echo '<div class="col-12 col-md-6">';
-    echo '<label class="form-label">'.esc_html__('Default Business Phone ID','aichat-connect').'</label>';
-    echo '<input type="text" name="aichat_connect_default_phone_id" class="form-control" value="'.esc_attr($default_phone).'" placeholder="123456789012345" />';
-    echo '<div class="form-text">'.esc_html__('Used if a specific mapping does not provide phone/token.','aichat-connect').'</div>';
-        echo '</div>';
-        echo '<div class="col-12 col-md-6">';
-    echo '<label class="form-label">'.esc_html__('Verify Token','aichat-connect').'</label>';
-    echo '<input type="text" name="aichat_connect_verify_token" class="form-control" value="'.esc_attr($verify_token).'" placeholder="mi-token-seguro" />';
-    echo '<div class="form-text">'.esc_html__('Must match the one set in Meta to validate the webhook (GET).','aichat-connect').'</div>';
-        echo '</div>';
-        echo '<div class="col-12">';
-    echo '<button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> '.esc_html__('Save settings','aichat-connect').'</button>';
-        echo '</div>';
-        echo '</form>';
-        echo '</div></div></div>';
-    // Telegram basic info card
-    echo '<div class="col-12 col-xl-6">';
-    echo '<div class="card shadow-sm">';
-    echo '<div class="card-header py-2"><strong><i class="bi bi-telegram"></i> Telegram</strong></div>';
-    echo '<div class="card-body small">';
-    $webhook_tg = esc_url( site_url('/wp-json/aichat-tg/v1/webhook/{mapping_id}') );
-    echo '<p>'.esc_html__('Webhook URL pattern (replace {mapping_id} with your mapping row id):','aichat-connect').'</p>';
-    echo '<div class="mb-2"><code style="user-select:all">'.esc_html($webhook_tg).'</code></div>';
+    // 1) Qué necesitas
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-1-circle me-1"></i>'.esc_html__('What you need before you start','aichat-connect').'</div>';
     echo '<ul class="mb-3 ps-3">';
-    echo '<li>'.esc_html__('Set your bot webhook with Telegram using the full URL including the mapping id.','aichat-connect').'</li>';
-    echo '<li>'.esc_html__('Example: https://your.site/wp-json/aichat-tg/v1/webhook/12','aichat-connect').'</li>';
-    echo '<li>'.esc_html__('Ensure the mapping “Specific Access Token” holds your Telegram bot token.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('A Meta for Developers account (your personal Facebook/Meta account works).','aichat-connect').' <a href="https://developers.facebook.com/" target="_blank" rel="noopener">developers.facebook.com</a></li>';
+    echo '<li>'.esc_html__('Create an App and add the "WhatsApp" product.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('A business phone number or the free WhatsApp Cloud API test number.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('A Meta Access Token with WhatsApp Business permissions (long-lived preferred).','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Your WordPress site must have valid HTTPS (e.g., https://your-site.com).','aichat-connect').'</li>';
     echo '</ul>';
-    echo '</div></div></div>';
 
-    // Info adicional (span full width row)
-        echo '<div class="col-12">';
-        echo '<div class="card shadow-sm">';
-    echo '<div class="card-header py-2"><strong><i class="bi bi-info-circle"></i> '.esc_html__('Notes','aichat-connect').'</strong></div>';
-        echo '<div class="card-body small">';
-        echo '<ul class="mb-0 ps-3">';
-        echo '<li>'.esc_html__('Mappings define which bot responds for each Phone Number ID (business).','aichat-connect').'</li>';
-        echo '<li>'.esc_html__('Session context is generated as wa_{md5(user_phone)}.','aichat-connect').'</li>';
-    echo '<li>'.esc_html__('Enable debug by defining AICHAT_CONNECT_DEBUG true in the main file to see detailed logs.','aichat-connect').'</li>';
-        echo '<li>'.esc_html__('Providers manage timeouts, fast ack and fallback. Adjust them in the Providers tab.','aichat-connect').'</li>';
-        echo '</ul>';
-        echo '</div></div></div>';
-        echo '</div>'; // row
+    // 2) Crear la app y obtener datos
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-2-circle me-1"></i>'.esc_html__('Create the app and get your credentials','aichat-connect').'</div>';
+    echo '<ol class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('Go to Meta → Apps and click "Create App" (Business or Other).','aichat-connect').' <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener">developers.facebook.com/apps</a></li>';
+    echo '<li>'.esc_html__('Add the WhatsApp product and click "Configure". Meta will provide a test number.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Save these values (you will need them here):','aichat-connect').'<div class="mt-1 small"><code>Phone Number ID</code>, <code>WhatsApp Business Account ID</code>, <code>Access Token</code></div></li>';
+    echo '<li>'.esc_html__('If you do not have a long-lived Access Token, create one in Business Settings → System Users and grant whatsapp_business_messaging.','aichat-connect').'</li>';
+    echo '</ol>';
+
+    // 3) Configurar el plugin
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-3-circle me-1"></i>'.esc_html__('Set up the plugin in WordPress','aichat-connect').'</div>';
+    echo '<ul class="mb-3 ps-3">';
+    echo '<li><strong>'.esc_html__('Channel','aichat-connect').':</strong> WhatsApp</li>';
+    echo '<li><strong>'.esc_html__('Endpoint ID','aichat-connect').':</strong> '.esc_html__('your Phone Number ID (e.g., 123456789012345).','aichat-connect').'</li>';
+    echo '<li><strong>'.esc_html__('Specific Access Token','aichat-connect').':</strong> '.esc_html__('your Meta Access Token (for this number).','aichat-connect').'</li>';
+    echo '<li><strong>'.esc_html__('Verify Token','aichat-connect').':</strong> '.esc_html__('choose any word/code (e.g., mydomain123) and remember it.','aichat-connect').'</li>';
+    echo '<li><strong>'.esc_html__('Bot / Provider','aichat-connect').':</strong> '.esc_html__('select which bot/AI should answer.','aichat-connect').'</li>';
+    echo '</ul>';
+
+    // 4) Configurar el Webhook en Meta
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-4-circle me-1"></i>'.esc_html__('Configure the Webhook in Meta Developers','aichat-connect').'</div>';
+    echo '<ol class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('In your Meta App, go to WhatsApp → Configuration → Webhooks.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Click "Edit callback URL" or "Configure Webhook" and paste:','aichat-connect').'<div class="mt-1">';
+    echo '<div>- <strong>Callback URL:</strong> <code class="text-primary" style="user-select:all">'.$wa_webhook.'</code></div>';
+    echo '<div>- <strong>Verify Token:</strong> '.esc_html__('the same value you set in this mapping.','aichat-connect').'</div>';
+    echo '</div></li>';
+    echo '<li>'.esc_html__('Click Verify and Save. If correct, Meta will confirm.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Under "Subscriptions", enable the messages field (required).','aichat-connect').'</li>';
+    echo '</ol>';
+
+    // 5) Probar
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-5-circle me-1"></i>'.esc_html__('Test that everything works','aichat-connect').'</div>';
+    echo '<ol class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('In Meta, use the test number and add your phone as recipient.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('From your WhatsApp, send a message (e.g., "Hello").','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Open the plugin Logs tab: you should see the incoming message and the bot reply.','aichat-connect').'</li>';
+    echo '</ol>';
+
+    // 6) Número real (opcional)
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-6-circle me-1"></i>'.esc_html__('Connect your real number (optional)','aichat-connect').'</div>';
+    echo '<ol class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('In WhatsApp Manager, add your real number and verify by SMS/call.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Update in the mapping the Phone Number ID and (if needed) the Access Token.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Repeat the webhook verification if Meta requests it.','aichat-connect').'</li>';
+    echo '</ol>';
+
+    // 7) Problemas frecuentes
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-7-circle me-1"></i>'.esc_html__('Common problems','aichat-connect').'</div>';
+    echo '<ul class="mb-0 ps-3">';
+    echo '<li><strong>400 / 403 (verification):</strong> '.esc_html__('Verify Token mismatch. Make sure the value matches in Meta and in this mapping.','aichat-connect').'</li>';
+    echo '<li><strong>190 token expired:</strong> '.esc_html__('your Access Token has expired. Generate a new one or use a long-lived token.','aichat-connect').'</li>';
+    echo '<li><strong>'.esc_html__('No messages received','aichat-connect').':</strong> '.esc_html__('enable the messages subscription and confirm the Phone Number ID is correct.','aichat-connect').'</li>';
+    echo '<li><strong>'.esc_html__('Messages delayed','aichat-connect').':</strong> '.esc_html__('could be server latency or temporary Meta issues; check Logs.','aichat-connect').'</li>';
+    echo '<li><strong>SSL / 404:</strong> '.esc_html__('your site must have valid HTTPS and the webhook URL must exist exactly as above.','aichat-connect').'</li>';
+    echo '</ul>';
+    echo '</div>';
+
+    // Telegram guide (rich, dynamic) — EN
+    $tg_base = esc_url( site_url('/wp-json/aichat-tg/v1/webhook/') );
+    $tg_initial = $row['channel']==='telegram' && !empty($row['phone']) ? ($tg_base . rawurlencode($row['phone'])) : $tg_base;
+    $tg_api_base = 'https://api.telegram.org/bot';
+    $token_val = isset($row['access_token']) ? (string)$row['access_token'] : '';
+    $setwebhook_initial = $tg_api_base . ( $token_val ? $token_val : 'botTOKEN' ) . '/setWebhook?url=' . $tg_initial;
+    // Optional public link from Display Name if it looks like a Telegram username
+    $public_link_html = '';
+    $dn = isset($row['display_name']) ? (string)$row['display_name'] : '';
+    $maybe_user = ltrim($dn, '@');
+    if ($maybe_user !== '' && preg_match('/^[A-Za-z0-9_]{5,32}$/', $maybe_user)){
+        $public_link_html = '<div class="mt-2"><i class="bi bi-link-45deg me-1"></i><span class="fw-semibold">'.esc_html__('Public link to your bot','aichat-connect').':</span> <code class="text-primary">https://t.me/'.esc_html($maybe_user).'</code></div>';
+    }
+    echo '<div class="alert alert-info" data-channel-only="telegram" style="display:none">';
+    echo '<div class="fw-semibold mb-2"><i class="bi bi-rocket-takeoff-fill text-primary me-1"></i>'.esc_html__('Guide to connect Telegram','aichat-connect').'</div>';
+
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-1-circle me-1"></i>'.esc_html__('Create a public bot in Telegram','aichat-connect').'</div>';
+    echo '<ol class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('Open Telegram and find @BotFather.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Send the command /newbot and follow the steps.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Choose a name and a username ending with "bot" (e.g., MyStoreBot).','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Copy the TOKEN BotFather gives you (you will need it below).','aichat-connect').'</li>';
+    echo '</ol>';
+
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-2-circle me-1"></i>'.esc_html__('Configure the mapping in WordPress','aichat-connect').'</div>';
+    echo '<ul class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('Fill out the form above.','aichat-connect').'</li>';
+    echo '</ul>';
+
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-3-circle me-1"></i>'.esc_html__('Activate the webhook in Telegram','aichat-connect').'</div>';
+    echo '<ol class="mb-3 ps-3">';
+    echo '<li>'.esc_html__('Open your browser.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Visit:','aichat-connect').' <code id="aichat-tg-setwebhook" class="text-primary" data-tg-api-base="'.esc_attr($tg_api_base).'" data-tg-base="'.esc_attr($tg_base).'" style="user-select:all">'.esc_html($setwebhook_initial).'</code> <button type="button" class="btn btn-outline-secondary btn-sm ms-2" data-copy-target-id="aichat-tg-setwebhook"><i class="bi bi-clipboard"></i> '.esc_html__('Copy','aichat-connect').'</button> <a id="aichat-tg-open-setwebhook" href="#" class="btn btn-outline-primary btn-sm ms-2" target="_blank" rel="noopener" style="display:none"><i class="bi bi-box-arrow-up-right"></i> '.esc_html__('Open','aichat-connect').'</a></li>';
+    echo '<li>'.esc_html__('You should see {"ok":true,"result":true,"description":"Webhook was set"}.','aichat-connect').'</li>';
+    echo '</ol>';
+
+    echo '<div class="mb-1 fw-semibold"><i class="bi bi-4-circle me-1"></i>'.esc_html__('Test that everything works','aichat-connect').'</div>';
+    echo '<ol class="mb-0 ps-3">';
+    echo '<li>'.esc_html__('Find your bot on Telegram by its username and send it a message.','aichat-connect').'</li>';
+    echo '<li>'.esc_html__('Check the Logs tab in WordPress to see the received message.','aichat-connect').'</li>';
+    echo '</ol>';
+    echo $public_link_html;
+    echo '</div>';
+    echo '</div>'; // guides wrapper
+
+    echo '</div></div>';
+
         echo '</div>'; // wrap
     }
+
 
     // AJAX: devolver lista de bots según servicio
     public function ajax_list_bots(){
@@ -522,10 +555,12 @@ class AIChat_Connect_Admin {
         $data = [
             'id' => isset($_POST['id']) ? (int)$_POST['id'] : null,
             'phone' => sanitize_text_field($_POST['phone'] ?? ''),
+            'channel' => sanitize_text_field($_POST['channel'] ?? 'whatsapp'),
             'service' => sanitize_text_field($_POST['service'] ?? 'aichat'),
             'bot_slug' => sanitize_text_field($_POST['bot_slug'] ?? ''),
             'display_name' => sanitize_text_field($_POST['display_name'] ?? ''),
             'access_token' => sanitize_text_field($_POST['access_token'] ?? ''),
+            'verify_token' => sanitize_text_field($_POST['verify_token'] ?? ''),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
         // Eliminado: lógica de is_default y reseteo global
@@ -556,7 +591,6 @@ class AIChat_Connect_Admin {
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center gap-2 mb-4">';
         echo '<h1 class="h3 m-0"><i class="bi bi-chat-dots text-success"></i> WhatsApp Logs</h1>';
-    echo '<a href="'.esc_url(admin_url('admin.php?page=aichat-connect-settings')).'" class="btn btn-outline-secondary btn-sm"><i class="bi bi-gear"></i> Settings</a>';
         echo '</div>';
 
         echo '<div class="card shadow-sm">';

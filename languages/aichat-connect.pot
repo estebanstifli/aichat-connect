@@ -350,5 +350,5 @@ msgid "Cancel"
 msgstr ""
 
 #: aichat-connect.php
-msgid "AI Chat Connect: the core AI Chat plugin is not active. Mappings using service \"AI Chat\" will fail, but \"AI Engine\" mappings will still attempt to respond."
+msgid "AI Chat Connect: the Axiachat AI plugin is not active. Mappings using service \"Axiachat AI\" will fail, but \"AI Engine\" mappings will still attempt to respond."
 msgstr ""
