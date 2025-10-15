@@ -32,8 +32,9 @@ class AIChat_Connect_Admin_Providers {
         $repo = AIChat_Connect_Repository::instance();
         $providers = $repo->list_providers(false);
         $editing = null;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only; edit screen loads existing data. Save enforces nonce.
         if ( isset($_GET['edit']) ) {
-            $editing = $repo->get_provider((int)$_GET['edit']);
+            $editing = $repo->get_provider( absint( wp_unslash($_GET['edit']) ) );
         }
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center gap-2 mb-4">';
@@ -171,12 +172,13 @@ class AIChat_Connect_Admin_Providers {
     public function handle_save(){
         if (!current_user_can('manage_options')) wp_die('Unauthorized');
     check_admin_referer('aichat_connect_save_provider');
-        $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unsplash + absint applied immediately.
+    $id = isset($_POST['id']) ? absint( wp_unslash($_POST['id']) ) : 0;
     if (!$id) { wp_safe_redirect(admin_url('admin.php?page=aichat-connect-providers')); exit; }
         $existing = AIChat_Connect_Repository::instance()->get_provider($id);
     if (!$existing){ wp_safe_redirect(admin_url('admin.php?page=aichat-connect-providers')); exit; }
         // Solo campos configurables
-        $raw_meta_input = wp_unslash($_POST['meta'] ?? $existing['meta']);
+    $raw_meta_input = wp_unslash($_POST['meta'] ?? $existing['meta']);
         $decoded_meta = [];
         if ($raw_meta_input) {
             $tmp = json_decode($raw_meta_input, true);
@@ -192,7 +194,7 @@ class AIChat_Connect_Admin_Providers {
         // New: history settings
         $decoded_meta['aipkit_history_enabled'] = isset($_POST['aipkit_history_enabled']) ? 1 : 0;
         if (isset($_POST['aipkit_history_limit'])) {
-            $lim = (int)$_POST['aipkit_history_limit'];
+            $lim = (int) wp_unslash($_POST['aipkit_history_limit']);
             if ($lim < 1) { $lim = 1; }
             if ($lim > 50) { $lim = 50; }
             $decoded_meta['aipkit_history_limit'] = $lim;            
@@ -203,11 +205,11 @@ class AIChat_Connect_Admin_Providers {
             'name' => $existing['name'],
             'description' => $existing['description'],
             'is_active' => isset($_POST['is_active']) ? 1:0,
-            'timeout_ms' => max(500, (int)($_POST['timeout_ms'] ?? $existing['timeout_ms'])),
+            'timeout_ms' => max(500, (int) wp_unslash($_POST['timeout_ms'] ?? $existing['timeout_ms'])),
             'fast_ack_enabled' => isset($_POST['fast_ack_enabled']) ? 1:0,
-            'fast_ack_message' => sanitize_text_field($_POST['fast_ack_message'] ?? $existing['fast_ack_message']),
-            'on_timeout_action' => sanitize_text_field($_POST['on_timeout_action'] ?? $existing['on_timeout_action']),
-            'fallback_message' => sanitize_text_field($_POST['fallback_message'] ?? $existing['fallback_message']),
+            'fast_ack_message' => sanitize_text_field( wp_unslash($_POST['fast_ack_message'] ?? $existing['fast_ack_message']) ),
+            'on_timeout_action' => sanitize_text_field( wp_unslash($_POST['on_timeout_action'] ?? $existing['on_timeout_action']) ),
+            'fallback_message' => sanitize_text_field( wp_unslash($_POST['fallback_message'] ?? $existing['fallback_message']) ),
             'meta' => $decoded_meta ? wp_json_encode($decoded_meta) : '',
         ];
         AIChat_Connect_Repository::instance()->upsert_provider($data);

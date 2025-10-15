@@ -41,6 +41,7 @@ class AIChat_Connect_Webhook {
         $match = false;
         if ($mode === 'subscribe' && $token){
             global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix; verification lookup.
             $cnt = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $t WHERE is_active=1 AND (channel='whatsapp' OR channel IS NULL) AND verify_token=%s", $token));
             $match = $cnt > 0;
         }

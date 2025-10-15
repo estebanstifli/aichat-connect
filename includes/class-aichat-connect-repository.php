@@ -7,17 +7,20 @@ class AIChat_Connect_Repository {
 
     public function get_bot_for_phone($phone){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name is trusted; values use prepare.
         return $wpdb->get_var($wpdb->prepare("SELECT bot_slug FROM $t WHERE phone=%s AND is_active=1", $phone));
     }
 
     public function get_mapping_by_phone($phone){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $t WHERE phone=%s AND is_active=1", $phone), ARRAY_A);
     }
 
     public function get_mapping_by_channel_and_phone($channel, $phone){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
         $channel = $channel ?: 'whatsapp';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $t WHERE channel=%s AND phone=%s AND is_active=1", $channel, $phone), ARRAY_A);
     }
 
@@ -31,6 +34,7 @@ class AIChat_Connect_Repository {
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
         // 1. business phone_number_id directo
         if ($business_id){
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $row = $wpdb->get_row($wpdb->prepare("SELECT bot_slug, service FROM $t WHERE phone=%s AND is_active=1", $business_id), ARRAY_A);
             if ($row) {
                 aichat_connect_log_debug('Repo match business id', [ 'business_id'=>$business_id, 'bot_slug'=>$row['bot_slug'], 'service'=>$row['service'] ]);
@@ -68,18 +72,20 @@ class AIChat_Connect_Repository {
 
     public function message_exists($wa_id){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_messages';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         return (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $t WHERE wa_message_id=%s", $wa_id)) > 0;
     }
 
     // CRUD for numbers mapping
     public function list_numbers(){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $t is a trusted table name built from $wpdb->prefix.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Trusted table name; simple admin listing.
         return $wpdb->get_results("SELECT * FROM $t ORDER BY phone ASC", ARRAY_A);
     }
 
     public function get_number($id){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $t WHERE id=%d", $id), ARRAY_A);
     }
 
@@ -109,6 +115,7 @@ class AIChat_Connect_Repository {
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
         // Buscar mapeo por business_id
         if ($business_id) {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
             $row = $wpdb->get_row($wpdb->prepare("SELECT phone, access_token FROM $t WHERE phone=%s AND is_active=1", $business_id), ARRAY_A);
             if ($row) {
                 aichat_connect_log_debug('Repo credentials business match', [ 'business_id'=>$business_id, 'has_custom_token'=> empty($row['access_token'])?0:1 ]);
@@ -119,6 +126,7 @@ class AIChat_Connect_Repository {
             }
         }
         // Fallback: primer mapeo activo de WhatsApp (canal por defecto)
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         $row = $wpdb->get_row("SELECT phone, access_token FROM $t WHERE is_active=1 AND (channel='whatsapp' OR channel IS NULL) ORDER BY id ASC LIMIT 1", ARRAY_A);
         aichat_connect_log_debug('Repo credentials fallback first mapping', [ 'found' => $row ? 1:0 ]);
         return [
@@ -130,10 +138,11 @@ class AIChat_Connect_Repository {
     // Logs: agrupación por día y teléfono
     public function list_conversation_groups($limit = 200){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_messages';
-        $limit = absint($limit) ?: 200;
-        // Build SQL without user input except LIMIT (cast above). Table name is trusted.
-        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $t and $limit are sanitized.
-        $sql = "SELECT DATE(created_at) AS day, phone,
+    $limit = absint($limit) ?: 200;
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Trusted table name ($t); admin listing aggregate.
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT DATE(created_at) AS day, phone,
                 SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) AS in_count,
                 SUM(CASE WHEN direction='out' THEN 1 WHEN direction='in' AND bot_response IS NOT NULL AND bot_response <> '' THEN 1 ELSE 0 END) AS out_count,
                 ( SUM(CASE WHEN direction='in' THEN 1 ELSE 0 END) + SUM(CASE WHEN direction='out' THEN 1 WHEN direction='in' AND bot_response IS NOT NULL AND bot_response <> '' THEN 1 ELSE 0 END) ) AS total,
@@ -141,13 +150,17 @@ class AIChat_Connect_Repository {
                 FROM $t
                 GROUP BY DATE(created_at), phone
                 ORDER BY day DESC, phone ASC
-                LIMIT $limit";
-        return $wpdb->get_results($sql, ARRAY_A);
+                LIMIT %d",
+                $limit
+            ),
+            ARRAY_A
+        );
     }
 
     // Logs: detalle por día y teléfono (orden cronológico)
     public function get_conversation_for_day($phone, $day){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_messages';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT * FROM $t WHERE phone=%s AND DATE(created_at)=%s ORDER BY created_at ASC, id ASC",
@@ -167,11 +180,13 @@ class AIChat_Connect_Repository {
 
     public function get_provider($id){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_providers';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $t WHERE id=%d", $id), ARRAY_A);
     }
 
     public function get_provider_by_key($key){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_providers';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->get_row($wpdb->prepare("SELECT * FROM $t WHERE provider_key=%s", $key), ARRAY_A);
     }
 
@@ -204,6 +219,7 @@ class AIChat_Connect_Repository {
         // We fetch last 2*limit rows (approx) involving this phone ordered descending then rebuild pairs.
         // direction='in' with user_text, and assistant response can be in same row (bot_response) or separate out rows.
         // Strategy: pull last 200 rows (cap) then iterate oldest->newest building user/assistant turns.
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
         $rows = $wpdb->get_results($wpdb->prepare("SELECT * FROM $t WHERE phone=%s ORDER BY id DESC LIMIT %d", $phone, max(100, $limit_pairs * 4)), ARRAY_A);
         if (!$rows) return [];
         $rows = array_reverse($rows);

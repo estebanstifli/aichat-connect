@@ -76,12 +76,13 @@ class AIChat_Connect_Activator {
             KEY is_active (is_active)
         ) $charset";
 
-        dbDelta($sql_numbers);
-        dbDelta($sql_messages);
-        dbDelta($sql_providers);
+    dbDelta($sql_numbers);
+    dbDelta($sql_messages);
+    dbDelta($sql_providers);
 
         // Insertar providers por defecto si la tabla está vacía
-        $exists = (int)$wpdb->get_var("SELECT COUNT(*) FROM $providers");
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix, used during activation.
+    $exists = (int)$wpdb->get_var("SELECT COUNT(*) FROM $providers");
         if ($exists === 0) {
             $wpdb->insert($providers, [
                 'provider_key' => 'aichat',
@@ -109,6 +110,7 @@ class AIChat_Connect_Activator {
             ]);
         }
         // Rename provider label/description if previously created with old name
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Activation/upgrade routine.
         $wpdb->update($providers,
             [
                 'name' => __('Axiachat AI','aichat-connect'),
@@ -117,7 +119,8 @@ class AIChat_Connect_Activator {
             [ 'provider_key' => 'aichat' ]
         );
         // Ensure AIPKit provider exists (added in later version); insert if missing.
-        $has_aipkit = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $providers WHERE provider_key=%s", 'aipkit'));
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+    $has_aipkit = (int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $providers WHERE provider_key=%s", 'aipkit'));
         if ($has_aipkit === 0) {
             $wpdb->insert($providers, [
                 'provider_key' => 'aipkit',

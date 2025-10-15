@@ -26,7 +26,8 @@ class AIChat_Connect_Admin {
     }
 
     private function is_plugin_screen(){
-        $page = $_GET['page'] ?? '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only screen detection, capability check gates actions.
+        $page = isset($_GET['page']) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
         return in_array($page, [
             'aichat-connect',            // Mapeos
             'aichat-connect-logs',
@@ -212,8 +213,13 @@ class AIChat_Connect_Admin {
 
         // Formulario
         $editing = null;
-    if ( isset($_GET['edit']) && wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'aichat_connect_edit_'.(int)$_GET['edit'] ) ){
-            $editing = $repo->get_number((int)$_GET['edit']);
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- View-only edit form load; protected by nonce.
+    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unsplash + cast applied; nonce verified below.
+    $edit_id = isset($_GET['edit']) ? (int) wp_unslash($_GET['edit']) : 0;
+    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce token read; verified with wp_verify_nonce.
+    $edit_nonce = isset($_GET['_wpnonce']) ? wp_unslash( $_GET['_wpnonce'] ) : '';
+    if ( $edit_id && wp_verify_nonce( $edit_nonce, 'aichat_connect_edit_' . $edit_id ) ){
+            $editing = $repo->get_number((int)$edit_id);
         }
         $defaults = [
             'phone' => '',
@@ -226,10 +232,11 @@ class AIChat_Connect_Admin {
         ];
         $row = $editing ? array_merge($defaults,$editing) : $defaults;
 
-        global $wpdb; $bots_t = $wpdb->prefix.'aichat_bots';
+    global $wpdb; $bots_t = $wpdb->prefix.'aichat_bots';
         $current_service = $row['service'] ?: 'aichat';
         $bots = [];
         if ($current_service === 'aichat') {
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Trusted table name from $wpdb->prefix; admin read-only listing.
             $bots = $wpdb->get_results("SELECT slug,name FROM $bots_t WHERE is_active=1 ORDER BY name ASC", ARRAY_A);
         } elseif ($current_service === 'ai-engine') {
             $bots = $this->get_ai_engine_bots();
@@ -338,7 +345,7 @@ class AIChat_Connect_Admin {
     echo '<div class="fw-semibold mb-2"><i class="bi bi-whatsapp text-success me-1"></i>'.esc_html__('Guide to connect WhatsApp with your WordPress plugin','aichat-connect').'</div>';
 
     // Webhook URL quick reference
-    echo '<div class="mb-3">'.esc_html__('Use this URL as the Callback URL in your Meta App (WhatsApp Cloud API):','aichat-connect').' <code id="aichat-wa-webhook" class="text-primary" style="user-select:all">'.$wa_webhook.'</code> <button type="button" class="btn btn-outline-secondary btn-sm ms-2" data-copy-target-id="aichat-wa-webhook"><i class="bi bi-clipboard"></i> '.esc_html__('Copy','aichat-connect').'</button></div>';
+    echo '<div class="mb-3">'.esc_html__('Use this URL as the Callback URL in your Meta App (WhatsApp Cloud API):','aichat-connect').' <code id="aichat-wa-webhook" class="text-primary" style="user-select:all">'.esc_html($wa_webhook).'</code> <button type="button" class="btn btn-outline-secondary btn-sm ms-2" data-copy-target-id="aichat-wa-webhook"><i class="bi bi-clipboard"></i> '.esc_html__('Copy','aichat-connect').'</button></div>';
 
     // 1) Qué necesitas
     echo '<div class="mb-1 fw-semibold"><i class="bi bi-1-circle me-1"></i>'.esc_html__('What you need before you start','aichat-connect').'</div>';
@@ -374,7 +381,7 @@ class AIChat_Connect_Admin {
     echo '<ol class="mb-3 ps-3">';
     echo '<li>'.esc_html__('In your Meta App, go to WhatsApp → Configuration → Webhooks.','aichat-connect').'</li>';
     echo '<li>'.esc_html__('Click "Edit callback URL" or "Configure Webhook" and paste:','aichat-connect').'<div class="mt-1">';
-    echo '<div>- <strong>Callback URL:</strong> <code class="text-primary" style="user-select:all">'.$wa_webhook.'</code></div>';
+    echo '<div>- <strong>Callback URL:</strong> <code class="text-primary" style="user-select:all">'.esc_html($wa_webhook).'</code></div>';
     echo '<div>- <strong>Verify Token:</strong> '.esc_html__('the same value you set in this mapping.','aichat-connect').'</div>';
     echo '</div></li>';
     echo '<li>'.esc_html__('Click Verify and Save. If correct, Meta will confirm.','aichat-connect').'</li>';
@@ -414,13 +421,8 @@ class AIChat_Connect_Admin {
     $tg_api_base = 'https://api.telegram.org/bot';
     $token_val = isset($row['access_token']) ? (string)$row['access_token'] : '';
     $setwebhook_initial = $tg_api_base . ( $token_val ? $token_val : 'botTOKEN' ) . '/setWebhook?url=' . $tg_initial;
-    // Optional public link from Display Name if it looks like a Telegram username
-    $public_link_html = '';
     $dn = isset($row['display_name']) ? (string)$row['display_name'] : '';
     $maybe_user = ltrim($dn, '@');
-    if ($maybe_user !== '' && preg_match('/^[A-Za-z0-9_]{5,32}$/', $maybe_user)){
-        $public_link_html = '<div class="mt-2"><i class="bi bi-link-45deg me-1"></i><span class="fw-semibold">'.esc_html__('Public link to your bot','aichat-connect').':</span> <code class="text-primary">https://t.me/'.esc_html($maybe_user).'</code></div>';
-    }
     echo '<div class="alert alert-info" data-channel-only="telegram" style="display:none">';
     echo '<div class="fw-semibold mb-2"><i class="bi bi-rocket-takeoff-fill text-primary me-1"></i>'.esc_html__('Guide to connect Telegram','aichat-connect').'</div>';
 
@@ -449,7 +451,9 @@ class AIChat_Connect_Admin {
     echo '<li>'.esc_html__('Find your bot on Telegram by its username and send it a message.','aichat-connect').'</li>';
     echo '<li>'.esc_html__('Check the Logs tab in WordPress to see the received message.','aichat-connect').'</li>';
     echo '</ol>';
-    echo $public_link_html;
+    if ($maybe_user !== '' && preg_match('/^[A-Za-z0-9_]{5,32}$/', $maybe_user)){
+        echo '<div class="mt-2"><i class="bi bi-link-45deg me-1"></i><span class="fw-semibold">'.esc_html__('Public link to your bot','aichat-connect').':</span> <code class="text-primary">'.esc_html('https://t.me/'.$maybe_user).'</code></div>';
+    }
     echo '</div>';
     echo '</div>'; // guides wrapper
 
@@ -462,7 +466,8 @@ class AIChat_Connect_Admin {
     // AJAX: devolver lista de bots según servicio
     public function ajax_list_bots(){
         if (!current_user_can('manage_options')){ wp_send_json_error('forbidden', 403); }
-        $service = isset($_GET['service']) ? sanitize_text_field($_GET['service']) : 'aichat';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only AJAX endpoint gated by capability.
+        $service = isset($_GET['service']) ? sanitize_text_field( wp_unslash($_GET['service']) ) : 'aichat';
         $items = [];
         if (in_array($service, ['ai-engine','aiengine','ai_engine'], true)){
             $bots = $this->get_ai_engine_bots();
@@ -491,6 +496,7 @@ class AIChat_Connect_Admin {
             }
         } else {
             global $wpdb; $bots_t = $wpdb->prefix.'aichat_bots';
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Trusted table name from $wpdb->prefix; admin read-only.
             $bots = $wpdb->get_results("SELECT slug, name FROM $bots_t WHERE is_active=1 ORDER BY name ASC", ARRAY_A);
             foreach ($bots as $b){ $items[] = ['value'=>$b['slug'], 'label'=>$b['name'].' ('.$b['slug'].')']; }
         }
@@ -554,13 +560,13 @@ class AIChat_Connect_Admin {
     check_admin_referer('aichat_connect_save_number');
         $data = [
             'id' => isset($_POST['id']) ? (int)$_POST['id'] : null,
-            'phone' => sanitize_text_field($_POST['phone'] ?? ''),
-            'channel' => sanitize_text_field($_POST['channel'] ?? 'whatsapp'),
-            'service' => sanitize_text_field($_POST['service'] ?? 'aichat'),
-            'bot_slug' => sanitize_text_field($_POST['bot_slug'] ?? ''),
-            'display_name' => sanitize_text_field($_POST['display_name'] ?? ''),
-            'access_token' => sanitize_text_field($_POST['access_token'] ?? ''),
-            'verify_token' => sanitize_text_field($_POST['verify_token'] ?? ''),
+            'phone' => sanitize_text_field( wp_unslash($_POST['phone'] ?? '') ),
+            'channel' => sanitize_text_field( wp_unslash($_POST['channel'] ?? 'whatsapp') ),
+            'service' => sanitize_text_field( wp_unslash($_POST['service'] ?? 'aichat') ),
+            'bot_slug' => sanitize_text_field( wp_unslash($_POST['bot_slug'] ?? '') ),
+            'display_name' => sanitize_text_field( wp_unslash($_POST['display_name'] ?? '') ),
+            'access_token' => sanitize_text_field( wp_unslash($_POST['access_token'] ?? '') ),
+            'verify_token' => sanitize_text_field( wp_unslash($_POST['verify_token'] ?? '') ),
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
         // Eliminado: lógica de is_default y reseteo global
@@ -571,7 +577,9 @@ class AIChat_Connect_Admin {
 
     public function handle_delete_number(){
         if (!current_user_can('manage_options')) wp_die('Unauthorized');
-        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce verified next line; reading id only.
+    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Unsplash + cast applied; nonce checked next.
+    $id = isset($_GET['id']) ? (int) wp_unslash($_GET['id']) : 0;
     check_admin_referer('aichat_connect_delete_'.$id);
     $res = AIChat_Connect_Repository::instance()->delete_number($id);
         if (!$res){
@@ -628,9 +636,12 @@ class AIChat_Connect_Admin {
     // Detalle de conversación (por día y teléfono)
     public function render_logs_detail(){
         if (!current_user_can('manage_options')) return;
-        $day = isset($_GET['day']) ? sanitize_text_field($_GET['day']) : '';
-        $phone = isset($_GET['phone']) ? sanitize_text_field($_GET['phone']) : '';
-    $ok = $day && $phone && wp_verify_nonce($_GET['_wpnonce'] ?? '', 'aichat_connect_logs_view_'.$phone.'_'.$day);
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading GET for building view; nonce verified below.
+        $day = isset($_GET['day']) ? sanitize_text_field( wp_unslash($_GET['day']) ) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $phone = isset($_GET['phone']) ? sanitize_text_field( wp_unslash($_GET['phone']) ) : '';
+    // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce token read; verified immediately.
+    $ok = $day && $phone && wp_verify_nonce(isset($_GET['_wpnonce']) ? wp_unslash($_GET['_wpnonce']) : '', 'aichat_connect_logs_view_'.$phone.'_'.$day);
 
         echo '<div class="wrap aichat-wa-wrap container-fluid">';
         echo '<div class="d-flex align-items-center gap-2 mb-4">';
