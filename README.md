@@ -1,44 +1,44 @@
-# AI Chat Connect Addon (WhatsApp)
+# Andromeda Connect Addon (WhatsApp)
 
-Integración de WhatsApp (Meta Cloud API) para el plugin Axiachat AI. Este addon enruta mensajes entrantes a un bot configurado y responde automáticamente.
+IntegraciÃ³n de WhatsApp (Meta Cloud API) para el plugin Axiachat AI. Este addon enruta mensajes entrantes a un bot configurado y responde automÃ¡ticamente.
 
 ## Estado
-Version 0.1.0 (alpha) – Solo texto entrante/saliente.
+Version 0.1.0 (alpha) - Solo texto entrante/saliente.
 
 ## Tablas
 - wp_aichat_connect_numbers: mapping telefono -> bot_slug
 - wp_aichat_connect_messages: log de mensajes in/out + respuesta
 
 ## Flujo Entrante
-1. Meta envía webhook a /wp-json/aichat-wa/v1/webhook (namespace REST pendiente de migrar a aichat-connect/v1)
+1. Meta envÃ­a webhook a /wp-json/aichat-wa/v1/webhook (namespace REST pendiente de migrar a andromeda-connect/v1)
 2. Se valida el verify token (solo en GET inicial)
 3. Se extrae el primer mensaje text
 4. Se localiza bot por telefono
 5. Se llama a `aichat_generate_bot_response()` (core Axiachat AI)
-6. Se guarda log local + se envía la respuesta por la API de WhatsApp
+6. Se guarda log local + se envÃ­a la respuesta por la API de WhatsApp
 
-## Configuración
-En el menú "AI Chat Connect" (slugs admin `aichat-connect*`):
+## ConfiguraciÃ³n
+En el menÃº "Andromeda Connect" (slugs admin `andromeda-connect*`):
 - Access Token (`aichat_connect_access_token`)
 - Default Phone ID (`aichat_connect_default_phone_id`)
 - Verify Token (`aichat_connect_verify_token`)
 
 ## Seguridad / Pendiente
-- [ ] Verificación de firma X-Hub-Signature-256 (añadir setting app secret)
-- [ ] Rate limiting específico por teléfono
+- [ ] VerificaciÃ³n de firma X-Hub-Signature-256 (aÃ±adir setting app secret)
+- [ ] Rate limiting especÃ­fico por telÃ©fono
 - [ ] Comando de opt-out (ej: "STOP")
-- [ ] Sanitizar longitud de respuesta antes de enviar (límite WA)
+- [ ] Sanitizar longitud de respuesta antes de enviar (lÃ­mite WA)
 
-## Próximos Pasos
+## PrÃ³ximos Pasos
 - Media (imagenes, audio)
 - Estados de entrega (statuses)
 - Reintentos exponenciales en errores 5xx
 - Herramienta de prueba manual en admin
-- Mapping múltiple (diferentes phone_id)
+- Mapping mÃºltiple (diferentes phone_id)
 
-<!-- Sección de migración eliminada: ya migrado en tu instalación -->
+<!-- SecciÃ³n de migraciÃ³n eliminada: ya migrado en tu instalaciÃ³n -->
 ## Desarrollo
-Requiere el plugin principal Axiachat AI para usar el servicio `aichat`. El proveedor `ai-engine` funciona si el plugin AI Engine está activo.
+Requiere el plugin principal Axiachat AI para usar el servicio `aichat`. El proveedor `ai-engine` funciona si el plugin AI Engine estÃ¡ activo.
 
 ## AIPKit Provider (New)
 Use the chatbot module of the "GPT3 AI Content Generator" plugin (AIPKit). New endpoint format: `POST /wp-json/aipkit/v1/chat/{bot_id}/message` with `Authorization: Bearer <API_KEY>`. Legacy fallback (`POST /wp-json/aipkit/v1/chat` + body bot_id + aipkit_api_key) is still attempted automatically if the new path returns 404/400.
@@ -75,4 +75,7 @@ add_filter('aichat_connect_aipkit_payload', function($payload, $args){
 	return $payload;
 }, 10, 2);
 ```
+
+
+
 

@@ -9,6 +9,10 @@ class AIChat_Connect_Webhook {
     }
 
     public function register_routes(){
+        // Public webhook endpoint by design:
+        // - WhatsApp (Meta Cloud API) posts updates from outside WordPress, so no auth is possible.
+        // - permission_callback => __return_true is intentional and documented in readme (Security / FAQ).
+        // - Verification uses a per-mapping verify token and we only echo the provided challenge when it matches.
         register_rest_route('aichat-wa/v1','/webhook', [
             [
                 'methods' => 'GET', // verification

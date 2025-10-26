@@ -5,7 +5,7 @@ class AIChat_Connect_Service {
     private static $instance;
     private $repo;
     private $api;
-    // Cache de normalización simple para no recalcular en bucles (no crítico, pero micro-optimización)
+    // Lightweight normalization cache to avoid recomputing inside tight loops.
     private $normalized_cache = [];
 
     public static function instance(){ if(!self::$instance){ self::$instance = new self(); } return self::$instance; }
@@ -25,7 +25,7 @@ class AIChat_Connect_Service {
         if ($this->repo->message_exists($wa_message_id)){
             return ['skipped' => 'duplicate'];
         }
-        // Asegurar longitud (por si algún ID supera el límite del índice UNIQUE)
+    // Clamp the message id to fit the UNIQUE index length just in case.
         if (strlen($wa_message_id) > 100) {
             $wa_message_id = substr($wa_message_id, 0, 100);
         }
@@ -48,14 +48,14 @@ class AIChat_Connect_Service {
         }
         $session_id = $this->ensure_session_id($phone);
 
-        // Enviar al servicio configurado (AI Chat por defecto, AI Engine opcional)
-    // Obtener configuración del provider (si existe) para timeout / fast ack
+    // Dispatch to the configured provider (AI Chat by default, AI Engine optional).
+    // Load provider configuration (timeout and fast-ack settings).
     $provider_cfg = $this->repo->get_provider_by_key($service);
     if ($provider_cfg) {
         aichat_connect_log_debug('Provider config loaded', [ 'service'=>$service, 'timeout_ms'=>$provider_cfg['timeout_ms'], 'fast_ack'=> (int)$provider_cfg['fast_ack_enabled'] ]);
     }
 
-    // Hooks pre-proveedor (permiten mutar texto o abortar)
+    // Pre-provider hook allows text mutation or short-circuit.
     $pre = apply_filters('aichat_connect_pre_provider', [
         'proceed' => true,
         'text' => $body_text,
@@ -69,9 +69,9 @@ class AIChat_Connect_Service {
         $body_text = $pre['text'];
     }
 
-    // Fast Ack (si configurado y habilitado)
+    // Fast acknowledgement (if configured and enabled).
     if ($provider_cfg && (int)$provider_cfg['fast_ack_enabled'] === 1 && !empty($provider_cfg['fast_ack_message'])) {
-        // Enviamos un acuse rápido no bloqueante (no registramos como conversación normal, sólo out separado)
+    // Send a non-blocking acknowledgement (logged separately as outbound only).
         try {
             $creds_ack = $this->repo->resolve_credentials($business_id, $phone);
             $this->api->send_text($phone, $provider_cfg['fast_ack_message'], $creds_ack);
@@ -123,7 +123,7 @@ class AIChat_Connect_Service {
             $result = new WP_Error('aipkit_provider_missing','AIPKit provider file not loaded.');
         }
     } elseif ($service === 'ai-engine' || $service === 'aiengine' || $service === 'ai_engine') {
-            // Preferimos la API PHP si el plugin está activo
+            // Prefer the PHP API when the plugin is active.
             $assistant = '';
             $result = null;
             if ( isset($GLOBALS['mwai']) && is_object($GLOBALS['mwai']) && method_exists($GLOBALS['mwai'], 'simpleChatbotQuery') ){
@@ -134,8 +134,8 @@ class AIChat_Connect_Service {
                     $result = new WP_Error('ai_engine_error', $e->getMessage());
                 }
             } else {
-                // Si no hay API PHP, indicamos configuración requerida (REST requiere setup previo)
-                $result = new WP_Error('ai_engine_not_available', 'AI Engine no está disponible (activa el plugin o configura REST).');
+                // If the PHP API is missing, surface a configuration requirement.
+                $result = new WP_Error('ai_engine_not_available', 'AI Engine is not available (enable the plugin or configure REST access).');
             }
         } else {
             // AI Chat (core)
@@ -145,20 +145,20 @@ class AIChat_Connect_Service {
                 $result = new WP_Error('aichat_core_missing', 'AI Chat core plugin no disponible.');
             } else {
                 $normalized = $this->normalize_user_phone($phone);
-                // Contexto extendido base (común a ambas funciones)
+                // Base context shared by both helper functions.
                 $core_context = [
                     'source_channel'     => 'whatsapp',
-                    'user_phone'         => $phone,            // original tal cual llegó
-                    'user_phone_normal'  => $normalized,       // E164 o limpio
+                    'user_phone'         => $phone,            // Original inbound value.
+                    'user_phone_normal'  => $normalized,       // E164 or cleaned value.
                     'business_phone_id'  => $business_id,
                     'session_id'         => $session_id,
                 ];
                 $core_context = apply_filters('aichat_connect_core_context_args', $core_context, $bot_slug, $phone, $business_id);
                 if ($has_new) {
-                    // Nueva función oficial: $resp = aichat_generate_bot_response_for_phone($bot_slug, $phoneNumberE164, $texto, $args)
+                    // Use the newer helper when available.
                     $result = call_user_func('aichat_generate_bot_response_for_phone', $bot_slug, $normalized, $body_text, $core_context);
                 } else {
-                    // Fallback a función antigua (mantiene compatibilidad con versiones previas del core)
+                    // Fallback to the legacy helper for older core versions.
                     $result = call_user_func('aichat_generate_bot_response', $bot_slug, $body_text, $session_id, $core_context);
                 }
             }
@@ -180,7 +180,7 @@ class AIChat_Connect_Service {
             ]);
             return ['error' => $result->get_error_message(), 'code'=>$result->get_error_code()];
         }
-        // Core devuelve clave 'message'. Mantenemos compatibilidad si en el futuro añade 'response'.
+    // Core returns a message key today; keep compatibility if response/answer are added later.
     $assistant = isset($assistant) ? $assistant : '';
         if (is_array($result)) {
             if (isset($result['message']) && is_string($result['message'])) {
@@ -208,7 +208,7 @@ class AIChat_Connect_Service {
         }
         aichat_connect_log_debug('Provider call ok', [ 'bot_slug'=>$bot_slug, 'service'=>$service, 'ms'=>$prov_ms, 'assistant_chars'=>strlen($assistant) ]);
 
-        // Timeout check (si tiempo excedido y config indica acción)
+    // Timeout check when the provider exceeds the configured limit.
         if ($provider_cfg && $timeout_ms > 0 && $prov_ms > $timeout_ms) {
             aichat_connect_log_debug('Provider timeout triggered', [ 'prov_ms'=>$prov_ms, 'timeout_ms'=>$timeout_ms, 'action'=>$provider_cfg['on_timeout_action'] ]);
             $action = $provider_cfg['on_timeout_action'];
@@ -229,11 +229,11 @@ class AIChat_Connect_Service {
                 ]);
                 return ['error'=>'timeout'];
             } else {
-                // fast_ack_followup: dejamos assistant original, se enviará normalmente (el ACK ya se mandó antes)
+                // fast_ack_followup: keep the assistant text; the ack already went out earlier.
                 aichat_connect_log_debug('Timeout action fallback fast ack followup', []);
             }
         }
-        // Log antes de enviar para tener trazabilidad aunque falle envío
+    // Log before sending so we keep diagnostics even if delivery fails.
         $this->repo->log_message([
             'wa_message_id' => $wa_message_id,
             'phone' => $phone,
@@ -246,7 +246,7 @@ class AIChat_Connect_Service {
             'meta' => ['core'=>$result, 'match'=>$resolution, 'business_id'=>$business_id]
         ]);
 
-    // Resolver credenciales (permiten multi-número) y enviar respuesta
+    // Resolve credentials (support per-number overrides) and send WhatsApp reply.
     $creds = $this->repo->resolve_credentials($business_id, $phone);
     aichat_connect_log_debug('Sending WA message', [ 'phone'=>$phone, 'bot_slug'=>$bot_slug, 'provider_service'=>$service, 'using_custom_token'=> empty($creds['access_token'])?0:1, 'phone_id'=>$creds['phone_id'] ? '***set***':'***empty***' ]);
     $send = $this->api->send_text($phone, $assistant, $creds);
@@ -260,7 +260,7 @@ class AIChat_Connect_Service {
             return ['error' => $send->get_error_message(), 'details' => $data];
         }
         aichat_connect_log_debug('WA message sent OK', [ 'phone'=>$phone, 'chars'=>strlen($assistant) ]);
-        // Hook post-proveedor (permite inspeccionar y mutar antes de enviar, aunque ya se envió). Sólo informativo aquí.
+    // Post-provider hook for inspection; informational only because the send already happened.
     do_action('aichat_connect_post_provider', [
             'phone' => $phone,
             'bot_slug' => $bot_slug,
@@ -277,7 +277,7 @@ class AIChat_Connect_Service {
             $bot_slug = $this->repo->get_bot_for_phone($phone);
         }
         if (!$bot_slug){
-            return new WP_Error('no_bot', __('No mapping for this phone','aichat-connect'));
+            return new WP_Error('no_bot', __('No mapping for this phone','andromeda-connect'));
         }
         $session_id = $this->ensure_session_id($phone);
     $creds = $this->repo->resolve_credentials(null, $phone);
@@ -301,14 +301,14 @@ class AIChat_Connect_Service {
     }
 
     /**
-     * Canal Telegram: procesa mensaje entrante y responde vía Bot API (sin usar WhatsApp Graph).
-     * @param array $mapping_row Fila de aichat_connect_numbers (usa bot_slug, service, access_token)
-     * @param string $chat_id Chat ID de Telegram (user o grupo)
-     * @param string $body_text Texto recibido
-     * @param string $tg_message_id ID del mensaje de Telegram (idempotencia)
+     * Telegram channel handler: processes the inbound message and answers through the Bot API (no WhatsApp Graph).
+     * @param array $mapping_row Row from aichat_connect_numbers (uses bot_slug, service, access_token)
+     * @param string $chat_id Telegram chat id (user or group)
+     * @param string $body_text User text received
+     * @param string $tg_message_id Telegram message id (idempotency)
      */
     public function handle_incoming_text_telegram($mapping_row, $chat_id, $body_text, $tg_message_id){
-        // Idempotencia por message_id de Telegram, con prefijo para evitar colisiones
+        // Idempotency: reuse Telegram message id with a prefix to avoid collisions
         $wa_like_id = 'tg_' . substr((string)$tg_message_id, 0, 90);
         if ($this->repo->message_exists($wa_like_id)){
             return ['skipped' => 'duplicate'];
@@ -339,7 +339,7 @@ class AIChat_Connect_Service {
         if (empty($pre['proceed'])) { return ['error' => 'aborted_by_filter']; }
         if (!empty($pre['text']) && is_string($pre['text'])) { $body_text = $pre['text']; }
 
-        // Fast Ack por Telegram si está configurado
+        // Fast ack via Telegram when it is configured
         $bot_token = $mapping_row['access_token'] ?? '';
         if ($provider_cfg && (int)$provider_cfg['fast_ack_enabled'] === 1 && !empty($provider_cfg['fast_ack_message'])) {
             try {
@@ -397,7 +397,7 @@ class AIChat_Connect_Service {
             if ( isset($GLOBALS['mwai']) && is_object($GLOBALS['mwai']) && method_exists($GLOBALS['mwai'], 'simpleChatbotQuery') ){
                 try { $assistant = (string)$GLOBALS['mwai']->simpleChatbotQuery($bot_slug ?: 'default', $body_text, 'TELEGRAM_'.$chat_id); $result=['provider'=>'ai-engine','message'=>$assistant]; }
                 catch (\Throwable $e){ $result = new WP_Error('ai_engine_error', $e->getMessage()); }
-            } else { $result = new WP_Error('ai_engine_not_available','AI Engine no está disponible (activa el plugin o configura REST).'); }
+            } else { $result = new WP_Error('ai_engine_not_available','AI Engine is not available (enable the plugin or configure REST access).'); }
         } else {
             $has_new = function_exists('aichat_generate_bot_response_for_phone');
             $has_legacy = function_exists('aichat_generate_bot_response');
@@ -475,23 +475,25 @@ class AIChat_Connect_Service {
     }
 
     /**
-     * Normaliza el teléfono de usuario hacia un formato tipo E164 simplificado (sin + si no existe, sólo dígitos)
-     * No intenta validar país; deja que un filtro lo refine si se necesita.
-     * Filtro: aichat_connect_normalize_user_phone( string $normalized, string $raw )
+     * Normalize the user phone into a simplified E164-like format (keep leading + when present, digits only).
+     * Does not validate country; extra filters can refine it when needed.
+     * Filter: aichat_connect_normalize_user_phone( string $normalized, string $raw )
      */
     private function normalize_user_phone($raw){
         if (!is_string($raw) || $raw==='') return '';
         if (isset($this->normalized_cache[$raw])) return $this->normalized_cache[$raw];
         $digits = preg_replace('/[^0-9]/','', $raw);
-        // Si el original empezaba con + y tenemos dígitos, conservamos indicación (sin espacios)
+        // Preserve the + prefix when the original starts with it and we still have digits
         if (strpos($raw, '+') === 0) {
             $normalized = '+' . $digits;
         } else {
-            $normalized = $digits; // Core podría inferir país si implementa lógica futura
+            $normalized = $digits; // Core can infer the country later if future logic requires it
         }
-        $normalized = substr($normalized, 0, 30); // límite defensivo
+        $normalized = substr($normalized, 0, 30); // defensive length guard
         $normalized = apply_filters('aichat_connect_normalize_user_phone', $normalized, $raw);
         $this->normalized_cache[$raw] = $normalized;
         return $normalized;
     }
 }
+
+

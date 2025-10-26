@@ -32,7 +32,7 @@ class AIChat_Connect_API_Client {
         }
         // Optional backoff when we recently detected expired/invalid token to avoid spamming logs
     if (get_transient('aichat_connect_token_block')){
-            return new WP_Error('wa_token_blocked', 'Token marcado como inválido recientemente. Reintenta más tarde.');
+            return new WP_Error('wa_token_blocked', 'Token marcado como invÃ¡lido recientemente. Reintenta mÃ¡s tarde.');
         }
         aichat_connect_log_debug('Graph send init', [ 'phone'=>$phone, 'phone_id'=> $phone_id ? '***set***':'***empty***', 'chars'=>strlen($text) ]);
         $url = 'https://graph.facebook.com/' . $this->graph_version . '/' . rawurlencode($phone_id) . '/messages';
@@ -64,7 +64,7 @@ class AIChat_Connect_API_Client {
                     // Block further attempts for 2 minutes to reduce log noise
                     set_transient('aichat_connect_token_block', 1, 2 * MINUTE_IN_SECONDS);
                     aichat_connect_log_debug('Graph token expired/invalid', [ 'phone'=>$phone, 'http_code'=>$code, 'gcode'=>$gcode, 'gsub'=>$gsub ]);
-                    return new WP_Error('wa_token_expired', __('WhatsApp token has expired or is invalid (code 190)','aichat-connect'), [ 'error' => $graph_error, 'http_code' => $code ]);
+                    return new WP_Error('wa_token_expired', __('WhatsApp token has expired or is invalid (code 190)','andromeda-connect'), [ 'error' => $graph_error, 'http_code' => $code ]);
                 }
             }
             aichat_connect_log_debug('Graph HTTP error', [ 'phone'=>$phone, 'http_code'=>$code ]);
@@ -74,3 +74,4 @@ class AIChat_Connect_API_Client {
         return $body;
     }
 }
+

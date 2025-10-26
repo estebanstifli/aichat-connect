@@ -68,7 +68,7 @@ class AIChat_Connect_Provider_AIPKit {
             'headers' => $headers,
             'body'    => wp_json_encode($payload),
             'timeout' => $timeout,
-            'user-agent' => 'AIChat-Connect-AIPKit/1.0; ' . home_url(),
+            'user-agent' => 'andromeda-connect-AIPKit/1.0; ' . home_url(),
         ]);
         if (is_wp_error($response)){
             $msg = $response->get_error_message();
@@ -125,7 +125,7 @@ class AIChat_Connect_Provider_AIPKit {
                 'headers' => $legacy_headers,
                 'body'    => wp_json_encode($legacy_payload),
                 'timeout' => $timeout,
-                'user-agent' => 'AIChat-Connect-AIPKit/1.0; ' . home_url(),
+                'user-agent' => 'andromeda-connect-AIPKit/1.0; ' . home_url(),
             ]);
             if (is_wp_error($response)) {
                 return new WP_Error('aipkit_http_error', $response->get_error_message(), [ 'endpoint'=>$used_endpoint ]);
@@ -147,3 +147,4 @@ class AIChat_Connect_Provider_AIPKit {
         return [ 'provider' => 'aipkit', 'message' => $reply, 'raw' => $json, 'endpoint'=>$used_endpoint ];
     }
 }
+

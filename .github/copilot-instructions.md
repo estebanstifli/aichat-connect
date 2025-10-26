@@ -1,9 +1,9 @@
-# AI Chat Connect Addon – Copilot Instructions
+﻿# Andromeda Connect Addon - Copilot Instructions
 
 Concise reference for AI agents contributing to this WordPress addon. Focus on real, current patterns (do not document roadmap features as implemented).
 
 ## Core Purpose
-Receive WhatsApp (Meta Cloud API) text messages and answer using a mapped bot from either the Axiachat AI core plugin (`aichat_generate_bot_response`) or alternative provider (AI Engine). Admin UI manages phone → bot/provider mappings, provider behavior (timeouts / fast ack), and logs.
+Receive WhatsApp (Meta Cloud API) text messages and answer using a mapped bot from either the Axiachat AI core plugin (`aichat_generate_bot_response`) or alternative provider (AI Engine). Admin UI manages phone -> bot/provider mappings, provider behavior (timeouts / fast ack), and logs.
 
 ## Layered Architecture (All Singletons)
 1. Webhook (`AIChat_Connect_Webhook`): Registers REST route, verifies GET token, extracts first text message from payload.
@@ -26,7 +26,7 @@ No wildcard / user phone chain implemented (older doc obsolete).
 Credentials: `resolve_credentials` returns mapping-specific token/phone_id else global (`aichat_connect_access_token`, `aichat_connect_default_phone_id`).
 
 ## Message Processing Flow
-POST /wp-json/aichat-wa/v1/webhook → extract first text → Service `handle_incoming_text`:
+POST /wp-json/aichat-wa/v1/webhook -> extract first text -> Service `handle_incoming_text`:
 - Idempotency: skip if WA message id already logged.
 - Resolve bot + provider row.
 - Optional fast ACK (independent send) if provider `fast_ack_enabled`.
@@ -82,3 +82,4 @@ aichat_connect_send_message('+34999999999', 'Hola!', 'mi_bot');
 No signature validation (X-Hub-Signature-256) yet; no media, rate limiting, or delivery status handling. Do not assume these exist.
 
 Keep edits consistent with these patterns; prefer adding hooks/filters over modifying core flow directly.
+

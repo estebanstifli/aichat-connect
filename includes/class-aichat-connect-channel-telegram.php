@@ -20,7 +20,7 @@ class AIChat_Connect_Channel_Telegram {
             'headers' => [ 'Content-Type' => 'application/json' ],
             'body' => wp_json_encode($body),
             'timeout' => 20,
-            'user-agent' => 'AIChat-Connect-Telegram/1.0; ' . home_url(),
+            'user-agent' => 'andromeda-connect-Telegram/1.0; ' . home_url(),
         ];
         $resp = wp_remote_post($url, $args);
         if (is_wp_error($resp)){
@@ -34,3 +34,4 @@ class AIChat_Connect_Channel_Telegram {
         return $json;
     }
 }
+

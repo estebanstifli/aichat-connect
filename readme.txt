@@ -1,35 +1,38 @@
-=== AI Chat Connect ===
+=== Andromeda Connect ===
 Contributors: estebandezafra
-Tags: whatsapp, telegram, ai, chatbot, support, automation
+Tags: whatsapp, telegram, ai, chatbot, chat
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 0.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Text Domain: aichat-connect
+Text Domain: andromeda-connect
 Domain Path: /languages
 
-AI support for WhatsApp and Telegram. Connect Axiachat AI, AI Engine, or AIPKit to auto‑reply, log chats, and manage per‑number mappings.
+Connect messaging services to AI chatbot widgets for auto-replies and conversation logs. Provider-agnostic with per-endpoint mappings.
 
 == Description ==
-Delight your customers with instant answers where they already are. AI Chat Connect turns your WhatsApp Business (Cloud API) and Telegram bot into an AI‑powered support channel for your site, store, or blog.
+AI support for WhatsApp and Telegram. Connect Axiachat AI, AI Engine, or AIPKit to auto-reply, log chats, and manage per-number mappings.
 
-Map each WhatsApp phone number (phone_number_id) or Telegram endpoint to an AI bot, then let the plugin auto‑reply on your behalf. Every conversation is logged so you can review activity anytime.
+
+Delight your customers with instant answers where they already are. Andromeda Connect turns your WhatsApp Business (Cloud API) and Telegram bot into an AI-powered support channel for your site, store, or blog.
+
+Map each WhatsApp phone number (phone_number_id) or Telegram endpoint to an AI bot, then let the plugin auto-reply on your behalf. Every conversation is logged so you can review activity anytime.
 
 What you can do:
-* Auto‑reply on WhatsApp and Telegram using your preferred AI provider (Axiachat AI, AI Engine, or AIPKit).
-* Map each number/endpoint to a specific bot (per‑channel, per‑phone mapping).
-* Fine‑tune provider behavior: response timeout, “Fast Ack” quick reply, and fallback on timeout.
+* Auto-reply on WhatsApp and Telegram using your preferred AI provider (Axiachat AI, AI Engine, or AIPKit).
+* Map each number/endpoint to a specific bot (per-channel, per-phone mapping).
+* Fine-tune provider behavior: response timeout, "Fast Ack" quick reply, and fallback on timeout.
 * See everything: unified logs (incoming/outgoing), conversation detail view, and basic stats per day/phone.
-* Safer operations: token‑expiry detection (Meta Graph code 190) and short transient backoff.
+* Safer operations: token-expiry detection (Meta Graph code 190) and short transient backoff.
 * Extend to your needs with hooks/filters. Fully internationalized; POT file included.
 
 
 How it works (in simple terms):
 1) A webhook receives the message (WhatsApp: Meta Cloud API; Telegram: Bot API webhook).
 2) The service picks the mapped bot/provider for that number/endpoint and asks it for a reply.
-3) A short optional “Fast Ack” can be sent immediately while the full answer is generated.
+3) A short optional "Fast Ack" can be sent immediately while the full answer is generated.
 4) The final reply is sent back to the user and everything is logged for review.
 
 Supported providers today:
@@ -37,16 +40,16 @@ Supported providers today:
 * AI Engine (Meow)
 * AIPKit (REST provider)
 
-This plugin is not affiliated with or endorsed by Meta or Telegram. Use according to the platforms’ terms and obtain any required user consent.
+This plugin is not affiliated with or endorsed by Meta or Telegram. Use according to the platforms' terms and obtain any required user consent.
 
 Quick Start (2 minutes):
 * WhatsApp
-    1. Go to Mappings → Add. Channel: WhatsApp. Endpoint ID: your phone_number_id. Paste your access token and set a Verify Token.
+    1. Go to Mappings -> Add. Channel: WhatsApp. Endpoint ID: your phone_number_id. Paste your access token and set a Verify Token.
     2. Copy the webhook URL shown and paste it in your Meta App (Cloud API) with the same Verify Token.
     3. Send a message to your WA number and check Logs.
 * Telegram
     1. Create a bot with @BotFather and copy the bot token.
-    2. Go to Mappings → Add. Channel: Telegram. Endpoint ID: friendly label. Specific Token: your bot token.
+    2. Go to Mappings -> Add. Channel: Telegram. Endpoint ID: friendly label. Specific Token: your bot token.
     3. Click the generated setWebhook link, then send a message to your bot and check Logs.
 
 
@@ -54,22 +57,22 @@ Quick Start (2 minutes):
 * Ecommerce support: order status, returns, shipping FAQs right from WhatsApp/Telegram.
 * Services and appointments: business hours, pricing, booking steps, and basic triage.
 * Lead capture 24/7: collect name/email/intent and hand off to your CRM (via your bot logic).
-* Knowledge base deflection: answer repetitive questions using your site’s content.
+* Knowledge base deflection: answer repetitive questions using your site's content.
 * Multilingual autoresponder: greet and help users in their own language.
 * Teams and agencies: map multiple numbers/endpoints to different bots and brands.
 
 == Screenshots ==
 1. Mappings: connect WhatsApp phone IDs or Telegram endpoints to bots.
 2. Providers: timeout, Fast Ack, and fallback options.
-3. Logs: grouped by day+phone with quick drill‑down.
+3. Logs: grouped by day+phone with quick drill-down.
 4. Conversation detail: user and bot bubbles with status.
 
 (Place screenshot-1.png, screenshot-2.png, etc. in the plugin root or /assets as per WP.org guidelines.)
 
 == Installation ==
-1. Upload the plugin folder `aichat-connect` to `/wp-content/plugins/` or install via ZIP upload.
+1. Upload the plugin folder `andromeda-connect` to `/wp-content/plugins/` or install via ZIP upload.
 2. Activate the plugin through the WordPress "Plugins" menu.
-3. Go to: AI Chat Connect → Mappings.
+3. Go to: Andromeda Connect -> Mappings.
 4. WhatsApp: copy the Webhook URL shown and configure it in your Meta App (Cloud API) with the same Verify Token you set in the mapping.
 5. Telegram: create a bot with @BotFather, paste its token in the mapping, and open the generated setWebhook link.
 6. Add at least one mapping and (optionally) tune provider behavior under "Providers".
@@ -77,16 +80,22 @@ Quick Start (2 minutes):
 
 == Frequently Asked Questions ==
 = Do I need the Axiachat AI core plugin? =
-It’s recommended. If absent, mappings using provider "Axiachat AI" will fail, but other providers (e.g., AI Engine, AIPKit) can still be used.
+It's recommended. If absent, mappings using provider "Axiachat AI" will fail, but other providers (e.g., AI Engine, AIPKit) can still be used.
 
 = How do I find my Business Phone Number ID? =
-In Meta Developers → WhatsApp → API Setup you will see the phone_number_id. Use that exact numeric ID in the mapping.
+In Meta Developers -> WhatsApp -> API Setup you will see the phone_number_id. Use that exact numeric ID in the mapping.
 
 = What about personal WhatsApp numbers? =
 Only WhatsApp Business Cloud API numbers (phone_number_id) are supported.
 
 = Does it support Telegram? =
 Yes. Create a bot with @BotFather, add a Telegram mapping with a friendly Endpoint ID and your bot token, then hit the provided setWebhook URL.
+
+= Why are the webhook endpoints public (permission_callback is __return_true)? =
+Webhooks must be reachable by external services (Meta/Telegram) that do not authenticate as WordPress users. The endpoints are intentionally public, and security relies on:
+* WhatsApp verification only echoing the `hub.challenge` when your Verify Token matches a stored mapping.
+* Telegram using a secret per-bot token set in your mapping and the setWebhook URL known only to your bot.
+Use HTTPS and keep your tokens secret.
 
 = Which AI providers are supported? =
 Axiachat AI (core), AI Engine (Meow), and AIPKit (REST). New providers can be added via a table row + a small integration.
@@ -116,7 +125,7 @@ Action `aichat_connect_post_provider` fires after a successful send with an info
 Yes. Insert a row in the providers table with a new `provider_key` then extend the Service switch logic to handle it (or hook via filters).
 
 = How do I translate the plugin? =
-Use the included `languages/aichat-connect.pot` with your translation tool (e.g. Poedit) and place compiled MO files under `languages/` or the global WP languages directory.
+Use the included `languages/andromeda-connect.pot` with your translation tool (e.g. Poedit) and place compiled MO files under `languages/` or the global WP languages directory.
 
 == Hooks / Filters Reference ==
 `aichat_connect_pre_provider( $arr, $service, $phone, $bot_slug )`  
@@ -137,8 +146,40 @@ Tables (with `$wpdb->prefix`):
 == Security Notes ==
 * WhatsApp webhook verification echoes the raw `hub.challenge` as required by Meta. Use HTTPS.
 * Verify tokens are stored per mapping and matched during verification in your Meta App.
-* Token‑expiry errors (Graph code 190) trigger a short transient block to avoid repeated failing calls.
+* Token-expiry errors (Graph code 190) trigger a short transient block to avoid repeated failing calls.
 * Store access tokens securely and rotate as needed.
+
+== Privacy & External Services ==
+This plugin integrates with third-party services to deliver its features. Site owners are responsible for disclosing and complying with applicable privacy laws.
+
+
+External services used (depending on your configuration):
+
+* WhatsApp (Meta Cloud API):
+    - Purpose: To receive and send messages via WhatsApp Business accounts.
+    - Data sent: Message text, phone_number_id, WhatsApp Business Account metadata, and phone numbers, only when a message is received or sent.
+    - Terms of Service: https://www.whatsapp.com/legal/business-terms/
+    - Privacy Policy: https://www.whatsapp.com/legal/privacy-policy/
+
+* Telegram Bot API:
+    - Purpose: To receive and send messages via Telegram bots.
+    - Data sent: Chat IDs, usernames, and message text, only when a message is received or sent.
+    - Terms of Service: https://core.telegram.org/telegram-api/terms
+    - Privacy Policy: https://telegram.org/privacy
+
+* Providers:
+    - Axiachat AI: The Axiachat AI core plugin processes text locally within your WordPress site (and/or according to its own configuration).
+    - AI Engine (Meow): Text is processed by the AI Engine plugin in your site (and/or according to its provider settings).
+    - AIPKit: Text and optional conversation history are sent to the configured AIPKit REST endpoint you control.
+
+What the plugin stores:
+* Mappings: phone_number_id or Telegram endpoint, provider/bot selected, access token (if you paste one), verify token (WhatsApp), display name.
+* Logs: incoming and outgoing messages (text), timestamps, session IDs, bot slug, status, and optional meta (JSON).
+
+Consent and data minimization:
+* The plugin does not track site visitors. Webhooks only receive messages sent to your WhatsApp Business number or Telegram bot.
+* You should inform your users that messages are processed to reply automatically and may be stored in site logs.
+* Disable or purge logs if you do not wish to retain message contents.
 
 == Roadmap (Abbreviated) ==
 (See `ROADMAP.md` for details) Media handling, delivery status events, rate limiting, signature validation, extended provider ecosystem.
@@ -152,7 +193,7 @@ Tables (with `$wpdb->prefix`):
 First release. Review settings after upgrade; verify webhook verify token and token permissions.
 
 == Localization ==
-English included (base). POT file available. Load a translation by adding the MO file to `/languages/` (text domain: aichat-connect).
+English included (base). POT file available. Load a translation by adding the MO file to `/languages/` (text domain: andromeda-connect).
 
 == Code Snippets ==
 Programmatic outbound message:
@@ -174,3 +215,6 @@ Open an issue in your project tracker or contact the author. Provide logs (enabl
 
 == Disclaimer ==
 Use at your own risk. Ensure compliance with WhatsApp / Meta platform policies and privacy regulations (e.g. GDPR) when processing user messages.
+
+
+

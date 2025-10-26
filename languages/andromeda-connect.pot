@@ -1,16 +1,16 @@
-msgid ""
+﻿msgid ""
 msgstr ""
-"Project-Id-Version: aichat-connect 0.1.0\n"
+"Project-Id-Version: andromeda-connect 0.1.0\n"
 "Report-Msgid-Bugs-To: https://example.com/support\n"
 "POT-Creation-Date: 2025-09-27 00:00+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: AI Chat Connect i18n bootstrap\n"
-"X-Domain: aichat-connect\n"
+"X-Generator: Andromeda Connect i18n bootstrap\n"
+"X-Domain: andromeda-connect\n"
 
 #: includes/class-aichat-connect-admin.php
-msgid "Phone ID → Bot Mappings"
+msgid "Phone ID -> Bot Mappings"
 msgstr ""
 
 #: includes/class-aichat-connect-admin.php
@@ -242,7 +242,7 @@ msgid "%d messages"
 msgstr ""
 
 #: includes/class-aichat-connect-admin-providers.php
-msgid "AI Chat Connect - Providers"
+msgid "Andromeda Connect - Providers"
 msgstr ""
 
 #: includes/class-aichat-connect-admin-providers.php
@@ -349,6 +349,10 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
-#: aichat-connect.php
-msgid "AI Chat Connect: the Axiachat AI plugin is not active. Mappings using service \"Axiachat AI\" will fail, but \"AI Engine\" mappings will still attempt to respond."
+#: axiachat-connect.php
+msgid "Andromeda Connect: the Axiachat AI plugin is not active. Mappings using service \"Axiachat AI\" will fail, but \"AI Engine\" mappings will still attempt to respond."
 msgstr ""
+
+
+
+

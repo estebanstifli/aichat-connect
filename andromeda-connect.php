@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: AI Chat Connect
- * Description: WhatsApp (Meta Cloud API) integration for the AI Chat plugin. Routes incoming messages to existing bots and replies automatically.
+ * Plugin Name: Andromeda Connect
+ * Description: Connect WhatsApp (Meta Cloud API) and Telegram webhooks to AI chat providers for automated replies with logging and mapping controls.
  * Version: 0.1.0
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: estebandezafra
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: aichat-connect
+ * Text Domain: andromeda-connect
  * Domain Path: /languages
  */
 
@@ -38,7 +38,7 @@ if ( ! function_exists( 'aichat_connect_log_debug' ) ) {
             if ( $json ) { $message .= ' | ' . $json; }
         }
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug logging guarded by constant.
-        error_log( '[AIChat-CONNECT] ' . $message );
+        error_log( '[andromeda-connect] ' . $message );
     }
 }
 
@@ -61,7 +61,7 @@ add_action('admin_init', ['AIChat_Connect_Activator','maybe_update_schema']);
 // Bootstrap
 add_action('plugins_loaded', function(){
     // Provider availability checks will be handled in the Providers UI later.
-    // No admin notice on load to keep first‑publish experience clean.
+    // No admin notice on load to keep first-publish experience clean.
     AIChat_Connect_Webhook::instance();
     AIChat_Connect_Webhook_Telegram::instance();
     AIChat_Connect_Admin::instance();
@@ -73,3 +73,5 @@ function aichat_connect_send_message($phone, $text, $bot_slug = null){
     $svc = AIChat_Connect_Service::instance();
     return $svc->send_outbound_text($phone, $text, $bot_slug);
 }
+
+

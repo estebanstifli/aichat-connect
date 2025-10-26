@@ -6,6 +6,9 @@ class AIChat_Connect_Webhook_Telegram {
     public static function instance(){ return self::$instance ?: (self::$instance = new self()); }
     private function __construct(){
         add_action('rest_api_init', function(){
+            // Public webhook endpoint by design for Telegram:
+            // - Telegram servers call this route from outside WP; no user auth applies.
+            // - permission_callback => __return_true is intentional and documented.
             // Route by endpoint id (string label stored in phone)
             register_rest_route('aichat-tg/v1', '/webhook/(?P<endpoint>[^/]+)', [
                 [ 'methods' => 'POST', 'callback' => [ $this, 'handle_post_by_endpoint' ], 'permission_callback' => '__return_true' ],
