@@ -84,7 +84,7 @@ class AIChat_Connect_Admin_Providers {
 				echo '<td>' . ((int) $provider['is_active'] ? '<span class="badge text-bg-success">' . esc_html__('Yes', 'andromeda-connect') . '</span>' : '<span class="badge text-bg-danger">' . esc_html__('No', 'andromeda-connect') . '</span>') . '</td>';
 				echo '<td><span class="badge text-bg-secondary">' . (int) $provider['timeout_ms'] . ' ms</span></td>';
 				echo '<td>' . ((int) $provider['fast_ack_enabled'] ? '<span class="badge text-bg-info">On</span>' : '<span class="badge text-bg-light text-muted">Off</span>') . '</td>';
-				echo '<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="' . $edit_url . '"><i class="bi bi-pencil-square"></i></a></td>';
+				echo '<td class="text-end"><a class="btn btn-sm btn-outline-primary" href="' . esc_url($edit_url) . '"><i class="bi bi-pencil-square"></i></a></td>';
 				echo '</tr>';
 			}
 		} else {
