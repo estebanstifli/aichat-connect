@@ -4,7 +4,7 @@ Tags: whatsapp, telegram, ai, chatbot, chat
 Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: andromeda-connect
@@ -78,6 +78,22 @@ Quick Start (2 minutes):
 6. Add at least one mapping and (optionally) tune provider behavior under "Providers".
 7. Send a message to your connected WhatsApp number or Telegram bot to test. Check Logs.
 
+== Testing ==
+We recommend testing on a staging site first:
+1. Enable WP_DEBUG and WP_DEBUG_LOG in wp-config.php.
+2. Activate the plugin and check your debug.log to confirm there are no database errors on activation (tables should be created by dbDelta).
+3. WhatsApp:
+    - Create a mapping (Channel: WhatsApp) with your phone_number_id and access token.
+    - Copy the Webhook URL to your Meta App (Cloud API) using the same Verify Token.
+    - Send a message to your WhatsApp Business number and verify it appears under Logs (direction=in and the bot response or follow-up).
+4. Telegram:
+    - Create a mapping (Channel: Telegram) with a friendly endpoint ID and your bot token.
+    - Click the generated setWebhook link and send a message to your bot; verify entries in Logs.
+5. Upgrading:
+    - If upgrading from a previous version, deactivate and activate the plugin once to ensure schema updates run.
+6. Optional QA:
+    - Run Plugin Check and PHPCS (WPCS). Verify nonce sanitization and that admin pages require manage_options.
+
 == Frequently Asked Questions ==
 = Do I need the Axiachat AI core plugin? =
 It's recommended. If absent, mappings using provider "Axiachat AI" will fail, but other providers (e.g., AI Engine, AIPKit) can still be used.
@@ -127,6 +143,52 @@ Yes. Insert a row in the providers table with a new `provider_key` then extend t
 = How do I translate the plugin? =
 Use the included `languages/andromeda-connect.pot` with your translation tool (e.g. Poedit) and place compiled MO files under `languages/` or the global WP languages directory.
 
+= Where are the official webhook docs? =
+* WhatsApp Cloud API webhooks (setup and verification):
+    - https://developers.facebook.com/docs/whatsapp/cloud-api/guides/set-up-webhooks/
+    - https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests
+* Telegram Bot API setWebhook:
+    - https://core.telegram.org/bots/api#setwebhook
+
+= Which capability is required to manage this plugin? =
+All admin pages in Andromeda Connect require the `manage_options` capability.
+
+== External Services ==
+This plugin integrates with third-party services to deliver its features. Site owners are responsible for disclosing and complying with applicable privacy laws.
+
+
+External services used (depending on your configuration):
+
+* WhatsApp (Meta Cloud API):
+    - Purpose: To receive and send messages via WhatsApp Business accounts.
+    - Data sent: Message text, phone_number_id, WhatsApp Business Account metadata, and phone numbers, only when a message is received or sent.
+    - Terms of Service: https://www.whatsapp.com/legal/business-terms/
+    - Privacy Policy: https://www.whatsapp.com/legal/privacy-policy/
+    - API Endpoint Domain: https://graph.facebook.com/ (WhatsApp Graph API)
+
+* Telegram Bot API:
+    - Purpose: To receive and send messages via Telegram bots.
+    - Data sent: Chat IDs, usernames, and message text, only when a message is received or sent.
+    - Terms of Service: https://core.telegram.org/telegram-api/terms
+    - Privacy Policy: https://telegram.org/privacy
+    - API Endpoint Domain: https://api.telegram.org/
+
+* Providers:
+    - Axiachat AI: The Axiachat AI core plugin processes text locally within your WordPress site (and/or according to its own configuration).
+    - AI Engine (Meow): Text is processed by the AI Engine plugin in your site (and/or according to its provider settings).
+    - AIPKit: Text and optional conversation history are sent to the configured AIPKit REST endpoint you control.
+
+== Privacy ==
+What the plugin stores:
+* Mappings: phone_number_id or Telegram endpoint, provider/bot selected, access token (if you paste one), verify token (WhatsApp), display name.
+* Logs: incoming and outgoing messages (text), timestamps, session IDs, bot slug, status, and optional meta (JSON).
+ 
+Consent and data minimization:
+* The plugin does not track site visitors. Webhooks only receive messages sent to your WhatsApp Business number or Telegram bot.
+* You should inform your users that messages are processed to reply automatically and may be stored in site logs.
+* Disable or purge logs if you do not wish to retain message contents.
+
+
 == Hooks / Filters Reference ==
 `aichat_connect_pre_provider( $arr, $service, $phone, $bot_slug )`  
 Filter: Modify or abort before provider dispatch. Set `proceed=false` to stop.
@@ -149,46 +211,26 @@ Tables (with `$wpdb->prefix`):
 * Token-expiry errors (Graph code 190) trigger a short transient block to avoid repeated failing calls.
 * Store access tokens securely and rotate as needed.
 
-== Privacy & External Services ==
-This plugin integrates with third-party services to deliver its features. Site owners are responsible for disclosing and complying with applicable privacy laws.
-
-
-External services used (depending on your configuration):
-
-* WhatsApp (Meta Cloud API):
-    - Purpose: To receive and send messages via WhatsApp Business accounts.
-    - Data sent: Message text, phone_number_id, WhatsApp Business Account metadata, and phone numbers, only when a message is received or sent.
-    - Terms of Service: https://www.whatsapp.com/legal/business-terms/
-    - Privacy Policy: https://www.whatsapp.com/legal/privacy-policy/
-
-* Telegram Bot API:
-    - Purpose: To receive and send messages via Telegram bots.
-    - Data sent: Chat IDs, usernames, and message text, only when a message is received or sent.
-    - Terms of Service: https://core.telegram.org/telegram-api/terms
-    - Privacy Policy: https://telegram.org/privacy
-
-* Providers:
-    - Axiachat AI: The Axiachat AI core plugin processes text locally within your WordPress site (and/or according to its own configuration).
-    - AI Engine (Meow): Text is processed by the AI Engine plugin in your site (and/or according to its provider settings).
-    - AIPKit: Text and optional conversation history are sent to the configured AIPKit REST endpoint you control.
-
-What the plugin stores:
-* Mappings: phone_number_id or Telegram endpoint, provider/bot selected, access token (if you paste one), verify token (WhatsApp), display name.
-* Logs: incoming and outgoing messages (text), timestamps, session IDs, bot slug, status, and optional meta (JSON).
-
-Consent and data minimization:
-* The plugin does not track site visitors. Webhooks only receive messages sent to your WhatsApp Business number or Telegram bot.
-* You should inform your users that messages are processed to reply automatically and may be stored in site logs.
-* Disable or purge logs if you do not wish to retain message contents.
-
 == Roadmap (Abbreviated) ==
 (See `ROADMAP.md` for details) Media handling, delivery status events, rate limiting, signature validation, extended provider ecosystem.
 
 == Changelog ==
+= 0.1.3 =
+* Docs: Added Testing section, Requirements, FAQ links to official webhook docs, and capability note.
+* Housekeeping: Refactored activator to root functions; load_plugin_textdomain added; minor docs restructuring (External Services and Privacy, Uninstalling).
+* No functional changes beyond schema/activation fixes already in 0.1.2.
+= 0.1.2 =
+* Fix: DB schema activation errors with WP_DEBUG (removed inline SQL comments, added required columns, corrected indexes, ensured provider_key seeding).
+* Docs: Readme External Services updated to include API endpoint domains (graph.facebook.com, api.telegram.org) plus Terms/Privacy links.
+* Security: Harden nonce sanitization and JSON meta input; escape admin URLs.
 = 0.1.0 =
 * Initial public release (foundational mapping, providers layer, logging, i18n base, security hardening, PHPCS compliance adjustments).
 
 == Upgrade Notice ==
+= 0.1.3 =
+Documentation improvements (Testing, Requirements) and internal refactor of activator; no breaking changes.
+= 0.1.2 =
+Schema creation fixes and documentation updates. Deactivate/activate once to ensure dbDelta runs and tables are created.
 = 0.1.0 =
 First release. Review settings after upgrade; verify webhook verify token and token permissions.
 
@@ -215,6 +257,14 @@ Open an issue in your project tracker or contact the author. Provide logs (enabl
 
 == Disclaimer ==
 Use at your own risk. Ensure compliance with WhatsApp / Meta platform policies and privacy regulations (e.g. GDPR) when processing user messages.
+
+== Uninstalling ==
+When uninstalling, the plugin removes the following options: `aichat_global_bot_slug`, `aichat_connect_access_token`, `aichat_connect_default_phone_id`.
+Custom database tables are not dropped automatically to prevent data loss:
+* `{prefix}aichat_connect_numbers`
+* `{prefix}aichat_connect_messages`
+* `{prefix}aichat_connect_providers`
+If you want to remove them, back up your data and drop the tables manually.
 
 
 
