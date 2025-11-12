@@ -1,3 +1,7 @@
+<p align="center">
+   <img src="assets/images/banner.jpg" alt="Andromeda Connect banner" />
+</p>
+
 # Andromeda Connect
 
 **WordPress Plugin** for WhatsApp & Telegram AI Integration
