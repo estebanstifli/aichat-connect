@@ -272,7 +272,7 @@ class AIChat_Connect_Admin {
         echo '</div>';
 
         echo '<div class="col-md-3">';
-    echo '<label class="form-label">'.esc_html__('Provider','andromeda-connect').'</label>';
+    echo '<label class="form-label">'.esc_html__('Chatbot Plugin','andromeda-connect').'</label>';
         echo '<select name="service" id="aichat-wa-provider" class="form-select">';
         foreach ($providers_active as $p){
             $selected_attr = selected($current_service, $p['provider_key'], false);
@@ -310,7 +310,7 @@ class AIChat_Connect_Admin {
     echo '<button class="btn btn-outline-secondary" type="button" data-copy-input-name="access_token"><i class="bi bi-clipboard"></i> '.esc_html__('Copy','andromeda-connect').'</button>';
         echo '</div>';
         echo '<div class="form-text">';
-    echo ($row['channel']==='whatsapp' ? esc_html__('Graph access token for this WhatsApp mapping.','andromeda-connect') : esc_html__('Required: Telegram Bot Token for this mapping.','andromeda-connect'));
+    echo ($row['channel']==='whatsapp' ? esc_html__('Required: WhatsApp access token for this mapping.','andromeda-connect') : esc_html__('Required: Telegram Bot Token for this mapping.','andromeda-connect'));
         echo '</div>';
         echo '</div>';
 
@@ -340,7 +340,8 @@ class AIChat_Connect_Admin {
     // Per-channel user guides
     echo '<div class="px-3 pb-3 mt-3">';
     // WhatsApp guide (beginner-friendly, step-by-step) - EN
-    $wa_webhook = esc_url( site_url('/wp-json/aichat-wa/v1/webhook') );
+    // Force ?rest_route= format for maximum compatibility (works without .htaccess / permalink rewrite)
+    $wa_webhook = esc_url( add_query_arg('rest_route', '/aichat-wa/v1/webhook', site_url('/')) );
     echo '<div class="alert alert-info" data-channel-only="whatsapp" style="display:none">';
     echo '<div class="fw-semibold mb-2"><i class="bi bi-whatsapp text-success me-1"></i>'.esc_html__('Guide to connect WhatsApp with your WordPress plugin','andromeda-connect').'</div>';
 
@@ -416,7 +417,8 @@ class AIChat_Connect_Admin {
     echo '</div>';
 
     // Telegram guide (rich, dynamic) - EN
-    $tg_base = esc_url( site_url('/wp-json/aichat-tg/v1/webhook/') );
+    // Force ?rest_route= format for maximum compatibility (works without .htaccess / permalink rewrite)
+    $tg_base = esc_url( add_query_arg('rest_route', '/aichat-tg/v1/webhook/', site_url('/')) );
     $tg_initial = $row['channel']==='telegram' && !empty($row['phone']) ? ($tg_base . rawurlencode($row['phone'])) : $tg_base;
     $tg_api_base = 'https://api.telegram.org/bot';
     $token_val = isset($row['access_token']) ? (string)$row['access_token'] : '';

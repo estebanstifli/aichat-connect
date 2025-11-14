@@ -91,7 +91,7 @@ class AIChat_Connect_Repository {
 
     public function upsert_number($data){
     global $wpdb; $t = $wpdb->prefix . 'aichat_connect_numbers';
-    $allowed = [ 'phone','channel','bot_slug','service','display_name','access_token','is_active' ];
+    $allowed = [ 'phone','channel','bot_slug','service','display_name','access_token','verify_token','is_active' ];
         $row = array_intersect_key($data, array_flip($allowed));
         if (empty($row['channel'])) { $row['channel'] = 'whatsapp'; }
         $row['updated_at'] = current_time('mysql');

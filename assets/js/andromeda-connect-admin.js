@@ -101,7 +101,7 @@
         endpointInput.placeholder = '123456789012345 (phone_number_id)';
         if(epHelp) epHelp.textContent = 'Use your Business Phone Number ID (Meta Cloud API).';
         tokenInput.placeholder = 'EAAG...';
-        if(tokHelp) tokHelp.textContent = 'Overrides global Graph access token for this mapping.';
+        if(tokHelp) tokHelp.textContent = 'Required: WhatsApp access token for this mapping.';
         tokenInput.required = false;
       }
     }

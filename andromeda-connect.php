@@ -20,7 +20,7 @@ define('AICHAT_CONNECT_DIR', plugin_dir_path(__FILE__));
 define('AICHAT_CONNECT_URL', plugin_dir_url(__FILE__));
 // Enable temporary debug by defining in wp-config.php or uncomment next line.
 if (!defined('AICHAT_CONNECT_DEBUG')) {
-    define('AICHAT_CONNECT_DEBUG', false); // Set to false in production.
+    define('AICHAT_CONNECT_DEBUG', true); // Set to false in production.
 }
 
 // Debug helper similar to core plugin but scoped to CONNECT addon
