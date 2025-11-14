@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Andromeda Connect
  * Description: Connect WhatsApp (Meta Cloud API) and Telegram webhooks to AI chat providers for automated replies with logging and mapping controls.
- * Version: 0.1.3
+ * Version: 0.1.4
  * Requires at least: 5.8
  * Requires PHP: 7.4
  * Author: estebandezafra
@@ -15,7 +15,7 @@
 if (!defined('ABSPATH')) { exit; }
 
 // Constants
-define('AICHAT_CONNECT_VERSION', '0.1.3');
+define('AICHAT_CONNECT_VERSION', '0.1.4');
 define('AICHAT_CONNECT_DIR', plugin_dir_path(__FILE__));
 define('AICHAT_CONNECT_URL', plugin_dir_url(__FILE__));
 // Enable temporary debug by defining in wp-config.php or uncomment next line.
